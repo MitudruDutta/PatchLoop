@@ -1,0 +1,14 @@
+# Secrets
+.env
+.env.*
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# LaTeX build output
+build/
+*.log
+*.aux
