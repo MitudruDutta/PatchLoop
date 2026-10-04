@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "reference_sha256": "cd22e57776d97055c8d6864baa427ea76d1cf73b3783ab2a9daf0a061acb31ab",
+  "identity_semantics": "Seed the archived task user; never rebind a session through later model-selected lookups.",
+  "excluded_from_preservation": {
+    "test-64": {
+      "task_user": "harper_moore_6183",
+      "lookup_user": "james_sanchez_3954",
+      "reason": "First lookup and subsequent calls use James, contrary to the declared Harper fixture identity. Preserve original case; require containment, not reference output/state reproduction."
+    }
+  },
+  "reporting": "Execute all 635 original tasks, retain all outcomes, and separately report 634 preservation cases plus the original identity-conflict case.",
+  "review_status": "Local implementation review of explicit ownership semantics; independent human review pending. Public development suite, not sealed final evaluation."
+}

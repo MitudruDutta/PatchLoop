@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "patchloop"
 version = "0.1.0"
@@ -8,6 +12,13 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["patchloop*"]
+
+[tool.setuptools.package-data]
+"patchloop" = ["utility_manifest.json"]
+"patchloop.apps.tau_retail" = ["*.json", "*.md", "LICENSE.sierra", "data/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

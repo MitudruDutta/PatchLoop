@@ -2,17 +2,17 @@
 
 ## Product requirements, architecture, and research protocol
 
-**Status:** Proposed system; no implementation, experimental results, or security guarantees are claimed in this document.
+**Status (updated 5 October 2026):** Narrow frozen-model repair works: live Nemotron on Token Factory consumes Tavily guidance, generates an authentication/ownership guard, validates it in isolation, and promotes tested source locally. Its first candidate passed 43 boundary cases and preserved 634 policy-consistent archive tasks. All 635 outcomes remain visible, including `test-64`. Agent campaigns, confirmation, PR publication, dashboard, deployment and RL remain pending. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), [live evidence](evidence/live-repair-2026-10-05.json), and [research weaknesses](RESEARCH_WEAKNESSES.md).
 
 **Prepared:** 3 October 2026, Asia/Kolkata.
 
 **Revision:** Version 0.4, 4 October 2026. Section 0 adopts the upgraded plan: the first application is a copy of the public τ-bench retail environment instead of a toy shop with a planted defect. Sections 2, 4, 7, 8, 9, 11, and 16 follow Section 0. The product baseline remains a frozen-model repair loop. PATCHLOOP-RL is a separate, proposed training phase; it has not been implemented or measured.
 
-**One sentence:** Many AI agents keep their security rules only in the prompt; PATCHLOOP tests the agent, finds the rules that no code enforces, writes the guard code, and proves with tests that legitimate work still succeeds.
+**One sentence (planned product):** PATCHLOOP tests tool-using agents, finds prompt-only policy rules, generates guard patches, and records whether legitimate work still succeeds on specified tests.
 
 **Research extension:** Train the repair model from executed patch outcomes, then test whether that learned ability transfers to unfamiliar applications while preserving legitimate behavior and earlier repairs. Detailed requirements appear in Sections 13–16 and the companion `paper/PATCHLOOP_RL_Research_Manuscript.md`. The manuscript still describes the earlier two-integration pilot; update it from real data once the MVP runs.
 
-**Public demo hook:** “This agent passes its policy test. Watch it act on another customer's account. Then watch PATCHLOOP write and prove the fix.”
+**Public demo hook (use only after demonstrated):** “Watch this agent act on another customer's account, inspect its generated guard, and replay both versions.”
 
 ## 0. Current plan (version 0.4)
 
@@ -40,21 +40,25 @@ The same design is common in real agents: developers write the rules in the prom
 3. **Detect.** The protected evaluator flags four violation types: action on another user's data, disclosure of another user's private data, change without explicit confirmation, and action before authentication.
 4. **Reproduce.** Replay the violating tool call from a clean database.
 5. **Repair.** The repair worker sends the policy, the tool code, and the failure to Nemotron, which writes a guard patch.
-6. **Validate in the sandbox.** Three test sets must pass: the replayed violation must fail; all 1,375 correct tool calls from the 635 τ-bench retail tasks must still succeed with the session set to the task's user; earlier violation tests must still fail. The model gets at most three attempts.
+6. **Validate in the sandbox.** Check the original violation, historical regressions, and authorized utility cases. The archive contains 1,375 scheduled calls across 635 tasks; `test-64` has conflicting task/login identities. Preserve and report that conflict rather than treating every reference as policy-correct. Compare outputs as well as final database state. Freeze a reviewed utility-case manifest before generated-repair acceptance; keep all original task outcomes visible. The model gets at most three attempts.
 7. **Promote.** Keep a passing patch as a new version; otherwise keep the old version.
 8. **Publish.** Open a pull request in this project's own repository with the patch, the new tests, and an evidence report.
 9. **Test again.** The adversarial tester runs against the new version. The dashboard shows before and after.
 
-The confirmation guard must read the conversation transcript, which only an agent system has. Ownership and authentication guards are ordinary authorization code; state that honestly.
+Confirmation must be tied to a particular action and its arguments in trusted user turns; a model-supplied `yes` is insufficient. Conversation-bound confirmation also exists in non-agent systems and is not itself a novelty claim. Reference action lists omit confirmation turns, so they cannot validate this rule. Ship authentication and ownership first.
+
+**Current implementation boundary:** the prototype is a contract-to-code baseline. The trusted broker supplies both tool protection labels and resolved owner IDs, and the model prompt specifies the comparison. Nemotron does not discover the tool-to-resource mapping. Keep this baseline for measuring translation/replay cost; do not present it as general adapter repair. The original fixed-ID gate was vulnerable to memorization and has been replaced by per-run secret-seeded real-fixture identity checks.
+
+**Next adapter experiment (not implemented):** give the model policy text, tool schemas, incident evidence and a narrowly scoped read-only synthetic resource view. Candidate code would own tool selection and owner resolution, while authenticated identity, data immutability, effects and promotion remain trusted. Exclude evaluator files, secret seeds and sealed cases from that capability. Specify data visibility and read authorization first; compare against the present baseline and a handwritten adapter. Broadening access solely to make the task harder is insufficient justification.
 
 ### 0.3 Why this replaces the toy shop
 
 | Weakness of the earlier plan | Answer in version 0.4 |
 |---|---|
 | The defect was planted by us | Prompt-only rules are a real design pattern in a well-known benchmark |
-| The fix was one `if` statement | The guard must add a session to the tools, enforce ownership and confirmation, and keep 1,375 correct calls working |
-| "Why not enforce the checker directly?" | No enforcement code existed; the rules existed only as English text. A hand-written guard remains a required comparison |
-| No agent-specific element | The confirmation guard depends on the conversation |
+| The fix was one `if` statement | Session handling, ownership, output preservation, and confirmation require explicit contracts and tests; complexity alone is not research novelty |
+| "Why not enforce the checker directly?" | Prompt-only rules motivate enforcement, but do not establish a benefit from generated repair over a handwritten guard. Measure both |
+| No agent-specific element | End-to-end agent evaluation is needed; transcript confirmation alone does not establish an agent-specific contribution |
 | Toy demonstration | The output is a reviewable pull request with tests and evidence |
 
 ### 0.4 Model roles and services
@@ -83,8 +87,8 @@ Run the application on Nebius AI Cloud; optionally run test campaigns in paralle
 ### 0.6 First tasks
 
 1. Copy `tau_bench/envs/retail` into this repository with the Sierra copyright notice; mark it "derived from τ-bench" in the README.
-2. Write a replay script for the 1,375 correct calls that compares final database states.
-3. Obtain Token Factory and Tavily API keys, send one test request, and record the model names. Keep keys in environment variables, never in the repository.
+2. Replay all 1,375 scheduled calls; check baseline fidelity, guarded outputs and states, and identity inconsistencies. Baseline replay and guarded comparison are now implemented.
+3. Completed locally on 5 October: catalog verification, live inference, Tavily retrieval and integrated repair using `nvidia/nemotron-3-super-120b-a12b`. Keys remain in ignored local configuration/environment variables, never source.
 
 ## 1. What survives from PATCHBOSS
 
@@ -155,7 +159,7 @@ Authenticated identity, balances, ownership, and approval state come from truste
 |---|---|---|
 | P0 | τ-bench retail fixture | Real Nemotron calls and real synthetic database transitions are visible; the Sierra MIT notice is kept |
 | P0 | Session-aware dispatcher | The authenticated user comes from trusted tool results, never from model arguments |
-| P0 | Replay suite | All 1,375 correct τ-bench retail calls pass on the baseline and after every accepted patch |
+| P0 | Replay suite | Baseline preserves upstream state; candidate preserves outputs and state for reviewed authorized cases; report all 635 original outcomes and the `test-64` identity conflict |
 | P0 | Adversarial tester | A Nemotron tester runs against a sandboxed copy and its violations are recorded |
 | P0 | Trace recorder | Every tool attempt includes version, arguments, result, and state references |
 | P0 | Protected evaluators | The repair process cannot alter policies, expected outcomes, or evaluation infrastructure |
@@ -265,7 +269,7 @@ A visitor can reset a fixture, attempt a failure, inspect an existing repair, an
 
 Display two clear actions: “Challenge this version” and “Reproduce locally.” A report URL includes the tested version and downloadable evidence rather than a generic security score.
 
-For a short demo video: 0:00–0:20 the agent and its policy; 0:20–1:00 a cross-user action and the evaluator's violation label; 1:00–1:40 the generated guard, the 1,375-call replay, and the pull request; 1:40–2:20 the tester running again with every attempt blocked and a legitimate return succeeding; 2:20–3:00 numbers, architecture (Token Factory, Nemotron roles, Tavily), and limits. Show violations before and after repair, replay pass count, repair attempts, and cost.
+For a concise product walkthrough: show the policy and baseline effect, generated guard and actual replay results, repeated testing and a legitimate task, then measured usage and limits. Show failed attempts and reference conflicts. Do not script “every attempt blocked” before observing that result. Label the current offline handwritten comparison distinctly from the planned generated-repair demo.
 
 ## 8. Research question and proposed contribution
 
@@ -417,7 +421,7 @@ Use dependency gates rather than treating an estimated day count as evidence of 
 | Gate | Required artifact | Proceed when |
 |---|---|---|
 | G0: trusted execution | τ-bench retail copy, session-aware dispatcher, evaluator, 1,375-call replay suite, reference guard, tampering suite | All replay calls pass on the baseline; a hand-made cross-user call is detected; every named negative case is rejected, detected, or correctly marked indeterminate |
-| G1: frozen repair | Real Nemotron guard patch, complete trace, tested-version promotion, pull request | The violation test fails, all replay calls pass, and history checks pass on the exact activated artifact |
+| G1: frozen repair | Real Nemotron guard patch, complete trace, tested-version promotion, pull request | Original violation is contained, all 635 archive outcomes are recorded, all 634 policy-consistent preservation cases pass, the explicit conflict remains contained, and history checks pass on the exact activated artifact. Local generation/validation/promotion work; PR output is pending |
 | G2: usefulness pilot | Four-condition results on τ-bench retail, adversarial-tester campaign, effort/cost ledger | Measured repair value justifies the complexity in the stated setting; otherwise narrow the claim |
 | G3: public demonstration | Resettable sessions, version viewer, reproduction bundle | An independent person reproduces a documented result |
 | G4: optional RL feasibility | Pinned smoke run, reward diagnostics, steady-state profile, serving check | Data and signal are adequate and measured costs fit the declared spending cap |
@@ -434,7 +438,7 @@ MVP schedule (G0–G3 only):
 | 3 (18–24 Oct) | Pull request output; dashboard; deployment on Nebius AI Cloud; tester campaign; hand-written guard comparison | G2 results and a public demo exist |
 | 4 (25–29 Oct) | README and demo video; one outside person installs from the README | Release candidate ready (G3) |
 
-If time runs short, cut in this order: RL (always deferred), the airline domain, the direct-enforcement table (keep one README sentence), Tavily. Never cut the working repair loop, the replay suite, the README, the LICENSE, or the video.
+If time runs short, defer RL, the airline domain, additional dashboard polish, and optional Tavily integration. Retain direct-enforcement measurements for any claimed repair benefit. Never cut the working repair loop, validated replay cases, setup instructions, license notices, or submission video.
 
 ## 12. Release package
 
@@ -489,7 +493,7 @@ An allowlisted Python source file can still perform arbitrary side effects. Run 
 
 An out-of-process broker owns authoritative simulated state and mutation logs. The evaluator reads that state rather than candidate-reported success messages. Generated adapters cannot alter trusted identity, expected outcomes, the broker, or the runner. Evaluate test-harness tampering as a failure. Pin test semantics, dependencies, and fixture state. A container alone is not proof of isolation.
 
-The retail simulator must also support an explicitly labeled direct-enforcement mode: the broker evaluates tentative transitions and commits only allowed ones. Compare its cost and utility with repair. Observation mode permits synthetic failures only to measure fault injection. Do not confuse these configurations.
+The retail simulator must also support an explicitly labeled direct-enforcement mode: the broker evaluates tentative transitions and commits only allowed ones. Compare its cost and utility with repair. Observation mode records synthetic effects without policy prevention, including prompt-only policy violations in the unchanged benchmark. Fault injection is an additional, separately labelled setting. Do not confuse these configurations.
 
 The owner supplies complete policy context for all baselines. A manually written reference guard and a one-shot full-contract repair remain essential comparators. If these solve the problem more simply, report that finding and narrow the adaptive-product claim.
 
@@ -529,7 +533,7 @@ The paper can become an empirical submission only after released code, real trai
 | Conditional historical subsets differ across methods | Medium | Use a fixed shared panel for primary retention and disclose conditional denominators |
 | Passing enforced tests is a circular retention claim | High | Use sealed historical-family companions; treat finite-suite induction as an elementary invariant |
 | One-patch training does not learn a long-horizon repair strategy | Scope limitation | State this explicitly and measure feedback-distribution shift |
-| No implemented system, sufficient corpus, or GPU pilot | Blocking empirical claims | Keep the paper a protocol until real artifacts and experiments exist |
+| Only one narrow frozen-model implementation; no sufficient research corpus or GPU pilot | Blocking broad empirical/RL claims | Treat live ownership repair as engineering evidence; keep broader paper claims proposed until controlled experiments exist |
 | Research novelty is unestablished | Blocking novelty claims | Broaden related-work comparison and let controlled evidence determine the contribution |
 
 The architecture is plausible to prototype, but the case for RL remains unproven. A single-benchmark demo does not establish research value. Sections 15–16 supersede any earlier impression that the design is ready for an empirical paper merely because it has a reward formula and proofs.
@@ -538,9 +542,11 @@ The architecture is plausible to prototype, but the case for RL remains unproven
 
 ### Pilot scope and exact comparisons
 
-Start with the τ-bench retail copy (Section 0). Target the three prompt-only rules: ownership, authentication before action, and explicit confirmation. Use the 1,375 correct calls as the utility suite. A separately authored second integration is a P1 item; the τ-bench airline domain shares authors and code style, so it does not establish an independent family.
+Start with the τ-bench retail copy (Section 0). Implement ownership and authentication first; specify action-bound confirmation separately. The 1,375-call reference archive is a regression source, not an automatically valid or sealed utility suite. Resolve and disclose the `test-64` task/login conflict before freezing authorized utility cases. A separately authored second integration is a P1 item; the τ-bench airline domain shares authors and code style, so it does not establish an independent family.
 
 The four main conditions are unrepaired, frozen independent-sampling repair, frozen feedback repair, and direct enforcement. Keep a handwritten reference guard as a fixture-solvability check and account for its human effort. Both repair arms share initial source, incident, full contract, historical context, fixed model, acceptance gate, and declared candidate/token/test/wall-time ceilings. Feedback alone receives permitted intermediate execution diagnostics. Limit generation to three candidates per incident, select the first gate-passing candidate in a fixed order, and count failures and unused allowance honestly.
+
+The current gate freezes secret-seeded development/sealed identity panels per run, with disjoint fixture users and all nine protected tools. Only aggregate development diagnostics enter feedback; conflict outcome records and sealed diagnostics do not. Sealed checks run once after development selection; failure or incomplete execution stops repair rather than informing another candidate. These panels prevent fixed-ID fitting but remain self-authored checks within one public benchmark, not the proposed independently authored final study.
 
 Use deterministic action replay and repeated end-to-end agent runs, with clean tasks included. Fix one short incident stream per implementation if reporting retention; score all frozen snapshots afterward on the same sealed companions. Defer order sensitivity, adaptive attacks, public benchmark adaptation, and external developer studies to later protocols. Report each implementation separately; one or two clusters cannot establish population-level transfer.
 
