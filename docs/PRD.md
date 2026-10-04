@@ -18,7 +18,7 @@
 
 ### 0.1 Problem
 
-τ-bench is a public benchmark from Sierra for tool-using agents (MIT license; [S29]). Its retail domain has a support agent, 15 tools, and a written policy. Its successor τ²-bench keeps the same retail tool design (MIT license, last updated 28 September 2026; [S30]). Inspection on 4 October 2026 found that the tool code enforces some policy rules and leaves others to the model:
+τ-bench is a public benchmark from Sierra for tool-using agents (MIT license; [S29]). Its retail domain has a support agent, 16 tools, and a written policy. Its successor τ²-bench keeps the same retail tool design (MIT license, last updated 28 September 2026; [S30]). Inspection on 4 October 2026 found that the tool code enforces some policy rules and leaves others to the model:
 
 | Enforced in tool code | Present only in the policy text |
 |---|---|
@@ -104,7 +104,7 @@ This project is developer infrastructure with a public, interactive demonstratio
 
 ## 2. First application: the τ-bench retail agent
 
-Use this repository's copy of the τ-bench retail environment: synthetic users, orders, products, and payment methods, with 15 registered tools and a written policy (Section 0.1). No real payments or customer accounts are connected.
+Use this repository's copy of the τ-bench retail environment: synthetic users, orders, products, and payment methods, with 16 registered tools and a written policy (Section 0.1). No real payments or customer accounts are connected.
 
 The policy text is the owner's contract. Its rules (authenticate first, help one user per conversation, confirm before changes, plus the rules the tools already enforce) are application requirements. The repair worker may not invent or relax them.
 

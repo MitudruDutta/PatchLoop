@@ -31,8 +31,21 @@ This table is the plan. It will be replaced with the exact model identifiers and
 
 | Path | Content |
 |---|---|
+| `patchloop/apps/tau_retail/` | Vendored τ-bench retail environment and its 635 reference tasks (see its `NOTICE.md`) |
+| `patchloop/replay.py` | Replays the 1,375 reference calls and compares final database states |
+| `scripts/vendor_tau_bench.py` | Re-creates the vendored environment from the pinned upstream commit |
+| `tests/` | Test suite |
 | `docs/PRD.md` | Product requirements, architecture, and plan (Section 0 is the current plan) |
 | `docs/paper/` | Research protocol manuscript (Markdown and LaTeX), compiled PDF, and planning calculations |
+
+## Development
+
+Python 3.10 or later. The core has no runtime dependencies; tests use pytest.
+
+```bash
+python -m pytest            # run the test suite
+python -m patchloop.replay  # replay all reference calls (prints 635/635 when the environment is intact)
+```
 
 ## Research protocol
 
