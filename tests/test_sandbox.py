@@ -90,3 +90,20 @@ def test_batch_contexts_have_fresh_namespace_and_module_state(source):
     guard = SandboxGuard(source)
     assert guard.decide_many([{}, {}, {}]) == [True, True, True]
     assert [guard({}) for _ in range(3)] == [True, True, True]
+
+
+@pytest.mark.parametrize("path", ["/tmp/shared-state", "/shared-state", "/dev/shared-state",
+                                  "/dev/shm/shared-state"])
+def test_contexts_cannot_communicate_through_shared_files(path):
+    source = f'''def allow(context):
+    import os
+    if os.path.exists({path!r}):
+        return False
+    try:
+        with open({path!r}, "w") as file:
+            file.write("state from another context")
+    except OSError:
+        return True
+    return False
+'''
+    assert SandboxGuard(source).decide_many([{}, {}]) == [True, True]

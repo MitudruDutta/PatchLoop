@@ -67,9 +67,10 @@ class SandboxGuard:
         for path in ("/lib", "/lib64"):
             if Path(path).exists():
                 command.extend(["--ro-bind", path, path])
-        command.extend(["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+        command.extend(["--proc", "/proc", "--dev", "/dev",
                         "--ro-bind", str(Path(__file__).with_name("_guard_worker.py")),
-                        "/worker.py", "--chdir", "/tmp", "--",
+                        "/worker.py", "--remount-ro", "/", "--remount-ro", "/dev",
+                        "--chdir", "/", "--",
                         "/usr/bin/python3", "-I", "-S", "/worker.py"])
         with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
             try:
