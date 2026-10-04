@@ -5,11 +5,17 @@ patchloop.sandbox supplies the namespace, clean environment and limits.
 """
 
 import contextlib
+import ctypes
 import io
 import json
 import os
 import resource
 import sys
+
+
+class RejectOriginalStream(io.TextIOBase):
+    def write(self, value):
+        raise RuntimeError("Candidate cannot write to the original worker stream")
 
 
 def isolated_decision(code, context):
@@ -19,6 +25,13 @@ def isolated_decision(code, context):
     if pid == 0:
         os.close(reader)
         try:
+            # High-level redirect_stdout alone leaves shared OS descriptors open.
+            sink = os.open("/dev/null", os.O_WRONLY)
+            os.dup2(sink, 1)
+            os.dup2(sink, 2)
+            if sink not in (1, 2):
+                os.close(sink)
+            sys.__stdout__ = sys.__stderr__ = RejectOriginalStream()
             namespace = {}
             with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
                 exec(code, namespace)
@@ -48,6 +61,10 @@ def main():
     resource.setrlimit(resource.RLIMIT_FSIZE, (1024 * 1024,) * 2)
     resource.setrlimit(resource.RLIMIT_NPROC, (16, 16))
     resource.setrlimit(resource.RLIMIT_NOFILE, (32, 32))
+    # Child guards share a UID with the trusted worker. Deny opening its
+    # descriptors/memory via /proc, even though filesystem mounts are read-only.
+    if ctypes.CDLL(None).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPABLE
+        raise RuntimeError("Cannot isolate worker parent state")
     request = json.loads(sys.stdin.buffer.read(2_000_001))
     code = compile(request["source"], "/candidate.py", "exec")
     decisions = [isolated_decision(code, context) for context in request["contexts"]]
