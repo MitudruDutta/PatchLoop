@@ -107,3 +107,31 @@ def test_contexts_cannot_communicate_through_shared_files(path):
     return False
 '''
     assert SandboxGuard(source).decide_many([{}, {}]) == [True, True]
+
+
+@pytest.mark.parametrize("descriptor", [1, 2])
+def test_contexts_cannot_share_state_through_inherited_streams(descriptor):
+    source = f'''def allow(context):
+    import os
+    try:
+        if os.pread({descriptor}, 1, 0):
+            return False
+        os.pwrite({descriptor}, b"x", 0)
+    except OSError:
+        pass
+    return True
+'''
+    assert SandboxGuard(source).decide_many([{}, {}]) == [True, True]
+
+
+def test_candidate_cannot_reopen_parent_streams_via_proc():
+    source = '''def allow(context):
+    import os
+    try:
+        fd = os.open("/proc/%s/fd/2" % os.getppid(), os.O_RDWR)
+    except OSError:
+        return True
+    os.close(fd)
+    return False
+'''
+    assert SandboxGuard(source).decide_many([{}, {}]) == [True, True]

@@ -1,0 +1,4 @@
+*
+!sandbox.Dockerfile
+!patchloop/
+!patchloop/_guard_worker.py
