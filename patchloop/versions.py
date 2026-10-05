@@ -31,9 +31,12 @@ class VersionStore:
             yield
 
     def current(self) -> str:
+        return self._current()[0]
+
+    def _current(self, default_interface="fixed"):
         pointer = self.path / "current.json"
         if not pointer.exists():
-            return BASELINE_SOURCE
+            return BASELINE_SOURCE, default_interface
         record = json.loads(pointer.read_text())
         digest = record["source_hash"]
         if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
@@ -41,11 +44,25 @@ class VersionStore:
         source = (self.path / f"{digest}.py").read_text()
         if source_hash(source) != digest:
             raise ValueError("Guard artifact hash does not match activated version")
-        return source
+        interface = record.get("interface", "fixed")
+        if interface not in {"fixed", "adapter"}:
+            raise ValueError("Invalid activated interface")
+        return source, interface
 
-    def promote(self, source: str, *, expected_parent: str, evidence_hash: str):
+    def current_guard(self, *, default_interface="fixed"):
+        from patchloop.sandbox import SandboxGuard
+        source, interface = self._current(default_interface)
+        return SandboxGuard(source, interface=interface)
+
+    def promote(self, source: str, *, expected_parent: str, evidence_hash: str, interface="fixed",
+                expected_interface=None):
+        if interface not in {"fixed", "adapter"}:
+            raise ValueError("Invalid candidate interface")
         with self._locked():
-            if source_hash(self.current()) != expected_parent:
+            current_source, current_interface = self._current()
+            if (source_hash(current_source) != expected_parent or
+                    expected_interface is not None and (self.path / "current.json").exists()
+                    and current_interface != expected_interface):
                 raise StaleVersion("Parent changed during validation; candidate was not activated")
             digest = source_hash(source)
             artifact = self.path / f"{digest}.py"
@@ -56,7 +73,7 @@ class VersionStore:
                 if artifact.read_text() != source:
                     raise ValueError("Existing guard artifact has been modified") from None
             record = {"source_hash": digest, "parent_hash": expected_parent,
-                      "evidence_hash": evidence_hash}
+                      "evidence_hash": evidence_hash, "interface": interface}
             fd, name = tempfile.mkstemp(prefix=".current-", dir=self.path)
             try:
                 with os.fdopen(fd, "w") as file:

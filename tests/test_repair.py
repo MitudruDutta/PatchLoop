@@ -16,6 +16,13 @@ CORRECT = '''def allow(context):
 '''
 
 
+def test_prompt_schema_matches_real_records_without_invented_user_fields():
+    schema = repair.data_schema()
+    assert "user_id" not in schema["users"]["record_fields"]
+    assert "user_id" in schema["orders"]["record_fields"]
+    assert "email" in schema["users"]["record_fields"]
+
+
 def test_deny_all_fails_utility_boundary_without_expensive_replay(tmp_path):
     result = repair.validate_candidate(SandboxGuard("def allow(context):\n    return False\n"), tmp_path)
     assert result["accepted"] is False
@@ -129,6 +136,27 @@ def test_rejected_candidates_consume_budget_and_keep_evidence(monkeypatch, tmp_p
         assert (candidate / "request.json").exists()
         assert (candidate / "generation.json").exists()
         assert (candidate / "guard.patch").exists()
+
+
+@pytest.mark.parametrize("strategy", ["feedback", "independent"])
+def test_only_feedback_mode_receives_its_rejected_candidate_source(monkeypatch, tmp_path, strategy):
+    calls = []
+    bad = "def allow(context):\n    return 1\n"
+    class Model:
+        def complete(self, messages, **kwargs):
+            calls.append(json.loads(messages[1]["content"]))
+            return {"content": bad, "request_id": "scripted", "usage": {}}
+    class Search:
+        def guidance(self):
+            return {"results": []}
+    monkeypatch.setattr(repair, "TavilyClient", Search)
+    repair.run_repair(tmp_path / "run", tmp_path / "versions", "nvidia/test-nemotron",
+                      attempts=2, client=Model(), strategy=strategy)
+    diagnostics = calls[1]["previous_development_diagnostics"]
+    if strategy == "feedback":
+        assert diagnostics[0]["candidate_source"] == bad
+    else:
+        assert diagnostics == [] and calls[0] == calls[1]
 
 
 def test_already_contained_does_not_spend_generation_or_search(monkeypatch, tmp_path):

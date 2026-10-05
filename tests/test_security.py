@@ -36,9 +36,11 @@ def test_panels_use_disjoint_real_fixture_identities_and_cover_all_tools():
     suite = suite_from_seed(b"test-seed")
     pools = []
     for panel in (suite.development, suite.sealed):
+        # Unknown-resource cases name a deliberately absent ID; every other ID is real.
         identities = {c["context"][key] for c in panel
                       for key in ("authenticated_user_id", "owner_id")
-                      if c["context"][key] is not None}
+                      if c["context"][key] is not None
+                      and not (key == "owner_id" and c["kind"] == "unknown_resource")}
         assert identities <= app.load_db()["users"].keys()
         assert {c["tool"] for c in panel if c["kind"] == "cross_user"} == USER_TOOLS | ORDER_TOOLS
         pools.append(identities)

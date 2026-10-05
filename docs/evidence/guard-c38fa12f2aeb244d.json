@@ -1,0 +1,31 @@
+{
+  "source_hash": "c38fa12f2aeb244d1795e40f5447907de5fd8cdbd99b2728d4dd50471ed605de",
+  "interface": "fixed",
+  "sandbox_backend": "bwrap",
+  "scope": "public utility archive and per-run hidden identity checks; authentication/ownership only",
+  "boundary_cases": 43,
+  "boundary_failures": [],
+  "scheduled_tasks": 635,
+  "scheduled_calls": 1375,
+  "utility_tasks": 634,
+  "utility_passed": 634,
+  "coverage_complete": true,
+  "observed_violations": 0,
+  "new_execution_errors": 0,
+  "baseline_fidelity": true,
+  "security_development": {
+    "passed": true,
+    "cases": 230,
+    "effect_checks": 36,
+    "singleton_checks": 54
+  },
+  "sealed_security": {
+    "passed": true,
+    "cases": 230,
+    "effect_checks": 36,
+    "singleton_checks": 54
+  },
+  "accepted": true,
+  "limitations": "Finite fixture checks. Public archive regression; private panels share the same benchmark and oracle. No transfer or RL result.",
+  "source_file": "examples/guards/ownership.py"
+}
