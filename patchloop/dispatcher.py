@@ -11,8 +11,9 @@ from hashlib import sha256
 import json
 
 from patchloop.apps import tau_retail as app
+from patchloop.context import guard_input
 from patchloop.policy import (
-    AUTH_TOOLS, PRIVATE_READS, attempted_violations, changed_records,
+    AUTH_TOOLS, MUTATION_TOOLS, PRIVATE_READS, attempted_violations, changed_records,
     guard_context, unauthorized_changes,
 )
 
@@ -39,7 +40,8 @@ class ToolEvent:
 
 
 class RetailDispatcher:
-    def __init__(self, *, enforce: bool = False, trusted_user_id: str | None = None, guard=None):
+    def __init__(self, *, enforce: bool = False, trusted_user_id: str | None = None, guard=None,
+                 confirmations=None, enforce_confirmation: bool = False):
         if enforce and guard is not None:
             raise ValueError("Choose either handwritten enforcement or candidate guard")
         self._db = app.load_db()
@@ -48,6 +50,8 @@ class RetailDispatcher:
         self._user_id = trusted_user_id
         self._enforce = enforce
         self._guard = guard
+        self._confirmations = confirmations
+        self._enforce_confirmation = enforce_confirmation
         self._events: list[ToolEvent] = []
 
     @property
@@ -67,22 +71,32 @@ class RetailDispatcher:
         arguments = deepcopy(kwargs)
         attempted = []
         outcome = "completed"
+        confirmed = False
         try:
             if not isinstance(name, str) or not isinstance(arguments, dict):
                 raise TypeError("Tool name and arguments have invalid types")
             attempted = attempted_violations(before, user_before, name, arguments)
+            digest = getattr(self._guard, "source_hash", None)
+            if self._confirmations is not None and name in MUTATION_TOOLS:
+                confirmed = self._confirmations.permits(name, arguments, user_before, digest)
+                if not confirmed:
+                    attempted.append("confirmation_required")
             permitted = True
             if self._guard is not None:
-                permitted = self._guard(guard_context(before, user_before, name, arguments))
+                permitted = self._guard(guard_input(self._guard, before, user_before, name, arguments,
+                    confirmed=confirmed if self._confirmations is not None else True))
                 if type(permitted) is not bool:
                     raise TypeError("Guard returned an invalid decision")
-            if (self._enforce and attempted) or not permitted:
+            if ((self._enforce and attempted) or not permitted
+                    or (self._enforce_confirmation and name in MUTATION_TOOLS and not confirmed)):
                 result = "Error: policy denied"
                 outcome = "blocked"
             elif name not in app.TOOLS:
                 result = "Error: unknown tool"
                 outcome = "invalid"
             else:
+                if self._confirmations is not None and name in MUTATION_TOOLS:
+                    self._confirmations.consume(name, arguments, user_before, digest)
                 result = app.TOOLS[name].invoke(data=self._db, **arguments)
                 if name in AUTH_TOOLS and result in self._db["users"]:
                     if user_before is None:
@@ -99,6 +113,9 @@ class RetailDispatcher:
             outcome = "error"
 
         executed = unauthorized_changes(before, self._db, user_before)
+        if (self._confirmations is not None and name in MUTATION_TOOLS and not confirmed
+                and any(changed_records(before, self._db).values())):
+            executed.append("unconfirmed_change")
         if name in PRIVATE_READS and attempted and outcome == "completed":
             try:
                 disclosed = isinstance(json.loads(result), dict)

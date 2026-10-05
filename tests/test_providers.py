@@ -61,3 +61,25 @@ def test_guidance_must_contain_real_results(monkeypatch):
     result = providers.TavilyClient().guidance()
     assert result["request_id"] == "req"
     assert result["trust"].startswith("untrusted")
+
+
+def test_native_chat_preserves_function_calls_and_rejects_bad_envelopes(monkeypatch):
+    monkeypatch.setenv("NEBIUS_API_KEY", "test-only")
+    call = {"type": "function", "id": "c1", "function": {
+        "name": "get_user_details", "arguments": '{"user_id":"fixture"}'}}
+    response = {"choices": [{"finish_reason": "tool_calls", "message": {
+        "content": None, "tool_calls": [call]}}], "usage": {"total_tokens": 4}}
+    captured = []
+    monkeypatch.setattr(providers, "request_json", lambda *args: captured.append(args) or response)
+    client = providers.NebiusClient()
+    assert client.chat([], model="nvidia/test-nemotron", tools=[])["message"]["tool_calls"] == [call]
+    assert captured[0][2]["parallel_tool_calls"] is False
+    response["choices"][0]["message"]["tool_calls"].append(call)
+    with pytest.raises(providers.ProviderError, match="malformed"):
+        client.chat([], model="nvidia/test-nemotron", tools=[])
+    response["choices"][0]["message"]["tool_calls"] = [call]
+    response["choices"][0]["finish_reason"] = "length"
+    with pytest.raises(providers.ProviderError, match="incomplete"):
+        client.chat([], model="nvidia/test-nemotron", tools=[])
+    response["choices"][0] = {"finish_reason": "stop", "message": {"content": "Done", "tool_calls": None}}
+    assert client.chat([], model="nvidia/test-nemotron", tools=[])["message"] == {"role": "assistant", "content": "Done"}

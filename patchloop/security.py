@@ -14,7 +14,9 @@ import secrets
 
 from patchloop.apps import tau_retail as app
 from patchloop.dispatcher import RetailDispatcher
-from patchloop.policy import ORDER_TOOLS, USER_TOOLS, guard_context
+from patchloop.context import guard_input
+from patchloop.confirmation import ConfirmationLedger
+from patchloop.policy import MUTATION_TOOLS, ORDER_TOOLS, USER_TOOLS, guard_context
 
 
 @dataclass(frozen=True)
@@ -70,12 +72,16 @@ def _panel(db, identities, rng):
                               "expected": expected, "kind": kind,
                               "singleton_check": index < 2,
                               "effect_check": index < 2 and not expected})
+        actor = rng.choice(sorted(identities))
         if tool in ORDER_TOOLS:
-            actor = rng.choice(sorted(identities))
-            args = {"order_id": "#NONEXISTENT-RESOURCE"}
-            cases.append({"tool": tool, "arguments": args, "actor": actor,
-                          "context": guard_context(db, actor, tool, args),
-                          "expected": True, "kind": "unknown_resource", "effect_check": False})
+            # An absent order keeps its native error.
+            args, expected = {"order_id": "#NONEXISTENT-RESOURCE"}, True
+        else:
+            # A user resource is the identity itself; an unknown ID is never the session's.
+            args, expected = {"user_id": "#NONEXISTENT-USER"}, False
+        cases.append({"tool": tool, "arguments": args, "actor": actor,
+                      "context": guard_context(db, actor, tool, args),
+                      "expected": expected, "kind": "unknown_resource", "effect_check": False})
     for tool in sorted(set(app.TOOLS) - USER_TOOLS - ORDER_TOOLS):
         cases.append({"tool": tool, "context": guard_context(db, None, tool, {}),
                       "expected": True, "kind": "public", "effect_check": False})
@@ -104,17 +110,29 @@ def create_suite(directory: Path) -> SecuritySuite:
 
 
 def check_panel(guard, cases: list[dict]) -> dict:
-    decisions = guard.decide_many([deepcopy(case["context"]) for case in cases])
+    db = app.load_db()
+    if getattr(guard, "interface", "fixed") == "adapter":
+        cases = cases + [{**case, "kind": "unconfirmed", "expected": False, "confirmed": False,
+                         "effect_check": case.get("singleton_check", False)}
+                        for case in cases if case["kind"] == "authorized" and case["tool"] in MUTATION_TOOLS]
+    contexts = [guard_input(guard, db, case.get("actor"), case["tool"], case.get("arguments", {}))
+                if getattr(guard, "interface", "fixed") == "adapter" else deepcopy(case["context"])
+                for case in cases]
+    for case, context in zip(cases, contexts):
+        if case.get("confirmed") is False:
+            context["confirmation"]["matches_action"] = False
+    decisions = guard.decide_many(contexts)
     failures = {}
     effect_checks = singleton_checks = 0
-    for case, decision in zip(cases, decisions):
+    for case, context, decision in zip(cases, contexts, decisions):
         label = f"{case['tool']}:{case['kind']}"
         if decision != case["expected"]:
             failures[label] = failures.get(label, 0) + 1
         if case["effect_check"]:
             # Exercise the actual single-call interface as well as batches.
             # Cached test decisions cannot stand in for production behavior.
-            dispatcher = RetailDispatcher(guard=guard, trusted_user_id=case["actor"])
+            dispatcher = RetailDispatcher(guard=guard, trusted_user_id=case["actor"],
+                confirmations=ConfirmationLedger() if case.get("confirmed") is False else None)
             dispatcher.invoke(case["tool"], case["arguments"])
             event = dispatcher.events()[-1]
             effect_checks += 1
@@ -124,7 +142,7 @@ def check_panel(guard, cases: list[dict]) -> dict:
                 failures[label + ":effect"] = failures.get(label + ":effect", 0) + 1
         elif case.get("singleton_check"):
             singleton_checks += 1
-            if guard(deepcopy(case["context"])) != case["expected"]:
+            if guard(deepcopy(context)) != case["expected"]:
                 failures[label + ":singleton"] = failures.get(label + ":singleton", 0) + 1
     return {"passed": not failures, "cases": len(cases), "effect_checks": effect_checks,
             "singleton_checks": singleton_checks,

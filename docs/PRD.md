@@ -2,7 +2,7 @@
 
 ## Product requirements, architecture, and research protocol
 
-**Status (updated 5 October 2026):** Narrow frozen-model repair works: live Nemotron on Token Factory consumes Tavily guidance, generates an authentication/ownership guard, validates it in isolation, and promotes tested source locally. Its first candidate passed 43 boundary cases and preserved 634 policy-consistent archive tasks. All 635 outcomes remain visible, including `test-64`. Agent campaigns, confirmation, PR publication, dashboard, deployment and RL remain pending. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), [live evidence](evidence/live-repair-2026-10-05.json), and [research weaknesses](RESEARCH_WEAKNESSES.md).
+**Status (updated 5 October 2026):** Native Nemotron conversations, adversarial testing, action-bound consent, a repair/retest loop, a local HTML dashboard and offline reproduction/review bundles are implemented. A live conversation and one small tester campaign completed. The original fixed-rule generated guard remains valid under the corrected gate. The richer adapter mode passes a full scripted-provider workflow, but six live candidates were rejected; none activated. The four-condition runner exists without measured live comparison results. Public hosting, AI Cloud deployment, independent final evaluation and RL remain pending. All 635 archive outcomes stay visible, including `test-64`; all 634 policy-consistent cases remain the preservation denominator. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), [current evidence](evidence/local-product-2026-10-05.json) and [research weaknesses](RESEARCH_WEAKNESSES.md).
 
 **Prepared:** 3 October 2026, Asia/Kolkata.
 
@@ -47,9 +47,9 @@ The same design is common in real agents: developers write the rules in the prom
 
 Confirmation must be tied to a particular action and its arguments in trusted user turns; a model-supplied `yes` is insufficient. Conversation-bound confirmation also exists in non-agent systems and is not itself a novelty claim. Reference action lists omit confirmation turns, so they cannot validate this rule. Ship authentication and ownership first.
 
-**Current implementation boundary:** the prototype is a contract-to-code baseline. The trusted broker supplies both tool protection labels and resolved owner IDs, and the model prompt specifies the comparison. Nemotron does not discover the tool-to-resource mapping. Keep this baseline for measuring translation/replay cost; do not present it as general adapter repair. The original fixed-ID gate was vulnerable to memorization and has been replaced by per-run secret-seeded real-fixture identity checks.
+**Fixed-rule comparison:** this condition translates an explicit contract into code. The trusted broker supplies tool protection labels and resolved owner IDs, and the model prompt specifies the comparison. Keep it for measuring translation/replay cost; it does not demonstrate discovery of the tool-to-resource mapping. The original fixed-ID gate was vulnerable to memorization and has been replaced by per-run secret-seeded real-fixture identity checks.
 
-**Next adapter experiment (not implemented):** give the model policy text, tool schemas, incident evidence and a narrowly scoped read-only synthetic resource view. Candidate code would own tool selection and owner resolution, while authenticated identity, data immutability, effects and promotion remain trusted. Exclude evaluator files, secret seeds and sealed cases from that capability. Specify data visibility and read authorization first; compare against the present baseline and a handwritten adapter. Broadening access solely to make the task harder is insufficient justification.
+**Implemented adapter experiment:** the model receives policy text, tool schemas, incident evidence and selected read-only synthetic rows. Candidate code chooses tool protection and resource relationships; identity, consent metadata, data immutability, effects and promotion remain trusted. Computed ownership labels, evaluator files, secret seeds and sealed cases are excluded. A full scripted-provider workflow passes; six live candidates failed validation and none activated. The prompt now derives actual record fields, but that improvement has not been tested in another live generation. Accepted live repair and independent boundary/schema review remain required before effectiveness claims.
 
 ### 0.3 Why this replaces the toy shop
 
@@ -70,6 +70,8 @@ Confirmation must be tied to a particular action and its arguments in trusted us
 | Repair worker | Nemotron 3 Super, or Ultra if the account offers it | Code reasoning |
 
 Run the application on Nebius AI Cloud; optionally run test campaigns in parallel with Nebius Serverless Jobs. Confirm the exact model identifiers available to the account before writing code, and record them.
+
+Current local experiments use `nvidia/nemotron-3-super-120b-a12b` for all model roles. The Nano/Ultra routing above remains a planned comparison. AI Cloud deployment is deferred until local verification and project configuration are complete.
 
 **Tavily:** the repair worker calls Tavily at runtime to retrieve current public guidance for the defect class, such as OWASP authorization guidance and relevant library documentation. Treat results as untrusted reference text, never as instructions, and keep redacted request and result records.
 
@@ -185,6 +187,8 @@ The initial release excludes arbitrary hosted repository execution, automatic pr
 
 ## 5. Architecture
 
+The current local prototype uses one standard-library Python HTTP service, HTML/CSS/JavaScript, bounded native provider calls and per-run files. It has no relational database or distributed queue yet. Each conversation owns a fresh fixture and immutable initial guard; one background challenge runs at a time. These local limits do not provide public tenant authentication/isolation. The architecture below remains the planned hosted design.
+
 Use one API service, one repair worker, a small relational database, and per-run artifact directories. Keep the SDK independent of the dashboard. Add distributed queues or more orchestration only when the workload requires them.
 
 ~~~mermaid
@@ -256,6 +260,8 @@ For research, add TrainingRun, RepairEpisode, and ModelCheckpoint records. An ep
 Use source and artifact hashes to tie the displayed result to the tested code. Hashes establish artifact identity; they do not establish that an artifact is correct.
 
 ## 7. Public demonstration
+
+The three views and two actions below now exist locally. Browser checks exercise conversation, explicit consent, actual record changes, a challenge, evidence download and a mobile viewport using a scripted provider. Live backend smoke checks are separate. Public access and hosting are not verified.
 
 The dashboard has three linked views:
 
@@ -539,6 +545,8 @@ The paper can become an empirical submission only after released code, real trai
 The architecture is plausible to prototype, but the case for RL remains unproven. A single-benchmark demo does not establish research value. Sections 15–16 supersede any earlier impression that the design is ready for an empirical paper merely because it has a reward formula and proofs.
 
 ## 16. Implementation contract after critical review
+
+Current adapter repair receives policy text, native tool schemas, violation/conversation traces and a generic argument-selected read-only view. The broker does not compute an owner or protection flag for this mode. Trusted session/consent metadata and independent evaluators remain outside the candidate. Fixed-rule mode remains the explicit-rule comparator. Failed live adapter attempts are retained and reported rather than accepted by changing tests.
 
 ### Pilot scope and exact comparisons
 

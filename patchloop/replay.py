@@ -11,6 +11,7 @@ from multiprocessing import Pool
 
 from patchloop.apps import tau_retail as app
 from patchloop.dispatcher import RetailDispatcher, state_hash
+from patchloop.context import guard_input
 from patchloop.manifest import load_manifest
 from patchloop.policy import AUTH_TOOLS, guard_context
 
@@ -23,6 +24,7 @@ class _BatchedGuard:
         self.decisions = guard.decide_many(contexts)
         self.position = 0
         self.source_hash = guard.source_hash
+        self.interface = getattr(guard, "interface", "fixed")
 
     def __call__(self, context):
         index = self.position
@@ -79,7 +81,7 @@ def check_guarded_task(task: dict, guard=None) -> dict:
     baseline_errors = 0
     contexts, expected_outputs = [], []
     for index, call in enumerate(task["actions"]):
-        contexts.append(guard_context(baseline_db, task["user_id"], call["name"], call["kwargs"]))
+        contexts.append(guard_input(guard, baseline_db, task["user_id"], call["name"], call["kwargs"]))
         try:
             expected = raw_invoke(baseline_db, call["name"], call["kwargs"])
         except Exception as exc:

@@ -17,7 +17,7 @@ dev = ["pytest>=8"]
 include = ["patchloop*"]
 
 [tool.setuptools.package-data]
-"patchloop" = ["utility_manifest.json"]
+"patchloop" = ["utility_manifest.json", "web/*.html", "web/*.css", "web/*.js"]
 "patchloop.apps.tau_retail" = ["*.json", "*.md", "LICENSE.sierra", "data/*.json"]
 
 [tool.pytest.ini_options]

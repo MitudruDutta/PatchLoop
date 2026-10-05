@@ -15,7 +15,22 @@ TAVILY_SEARCH = "https://api.tavily.com/search"
 
 
 class ProviderError(RuntimeError):
-    pass
+    def __init__(self, message, *, metadata=None):
+        super().__init__(message)
+        self.metadata = metadata or {}
+
+
+def completion_metadata(response):
+    """Only accounting fields; never include provider text or error bodies."""
+    usage = response.get("usage", {})
+    result = {"request_id": response.get("id"), "usage": {
+        key: value for key, value in usage.items()
+        if key in {"prompt_tokens", "completion_tokens", "total_tokens"}
+        and type(value) is int and value >= 0} if isinstance(usage, dict) else {}}
+    choices = response.get("choices")
+    reason = choices[0].get("finish_reason") if isinstance(choices, list) and choices and isinstance(choices[0], dict) else None
+    result["finish_reason"] = reason if isinstance(reason, str) and reason in {"stop", "length", "tool_calls", "content_filter"} else "unknown"
+    return result
 
 
 def _credential(name: str) -> str:
@@ -60,12 +75,15 @@ class NebiusClient:
         return [row["id"] for row in records
                 if isinstance(row, dict) and isinstance(row.get("id"), str)]
 
-    def complete(self, messages: list[dict], *, model: str, max_tokens: int = 256) -> dict:
+    def complete(self, messages: list[dict], *, model: str, max_tokens: int = 256,
+                 temperature: float = 0) -> dict:
         if not model or not 1 <= max_tokens <= 8192:
             raise ValueError("Choose a model and a token limit between 1 and 8192")
+        if not 0 <= temperature <= 1:
+            raise ValueError("Temperature must be between zero and one")
         response = request_json(f"{NEBIUS_BASE}/chat/completions", self._key, {
             "model": model, "messages": messages, "max_tokens": max_tokens,
-            "temperature": 0,
+            "temperature": temperature,
         })
         try:
             choice = response["choices"][0]
@@ -73,14 +91,54 @@ class NebiusClient:
             if not isinstance(content, str) or not content.strip():
                 raise ValueError()
             if choice.get("finish_reason") != "stop":
-                raise ProviderError("Completion did not finish normally")
+                raise ProviderError("Completion did not finish normally", metadata=completion_metadata(response))
         except (KeyError, IndexError, TypeError, ValueError):
-            raise ProviderError("Provider returned no valid text completion") from None
+            raise ProviderError("Provider returned no valid text completion", metadata=completion_metadata(response)) from None
         return {
             "provider": "Nebius Token Factory", "model": response.get("model", model),
             "request_id": response.get("id"), "content": content,
             "usage": response.get("usage", {}),
         }
+
+    def chat(self, messages: list[dict], *, model: str, tools: list[dict],
+             max_tokens: int = 1024) -> dict:
+        """One bounded support-agent step using native function calling."""
+        if not model.lower().startswith("nvidia/") or "nemotron" not in model.lower():
+            raise ValueError("Choose an NVIDIA Nemotron model")
+        if not 1 <= max_tokens <= 8192:
+            raise ValueError("Invalid completion token limit")
+        response = request_json(f"{NEBIUS_BASE}/chat/completions", self._key, {
+            "model": model, "messages": messages, "tools": tools,
+            "tool_choice": "auto", "parallel_tool_calls": False,
+            "max_tokens": max_tokens, "temperature": 0,
+        })
+        try:
+            choice = response["choices"][0]
+            message = choice["message"]
+            content, calls = message.get("content"), message.get("tool_calls", [])
+            if calls is None:
+                calls = []  # OpenAI-compatible providers may encode absent calls as null.
+            if content is not None and not isinstance(content, str):
+                raise ValueError()
+            if not isinstance(calls, list) or len(calls) > 16:
+                raise ValueError()
+            ids = set()
+            for call in calls:
+                if (call["type"] != "function" or not isinstance(call["id"], str)
+                        or not call["id"] or call["id"] in ids
+                        or not isinstance(call["function"]["name"], str)
+                        or not isinstance(call["function"]["arguments"], str)):
+                    raise ValueError()
+                ids.add(call["id"])
+            if (choice.get("finish_reason") not in {"stop", "tool_calls"}
+                    or (not calls and not content)):
+                raise ValueError()
+        except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+            raise ProviderError("Provider returned an incomplete or malformed agent step",
+                                metadata=completion_metadata(response)) from None
+        return {"provider": "Nebius Token Factory", "model": response.get("model", model),
+                "request_id": response.get("id"), "usage": response.get("usage", {}),
+                "message": {"role": "assistant", "content": content, **({"tool_calls": calls} if calls else {})}}
 
 
 class TavilyClient:

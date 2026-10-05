@@ -12,6 +12,7 @@ ORDER_TOOLS = frozenset({
     "modify_pending_order_items", "modify_pending_order_payment",
 })
 PRIVATE_READS = frozenset({"get_user_details", "get_order_details"})
+MUTATION_TOOLS = (USER_TOOLS | ORDER_TOOLS) - PRIVATE_READS
 
 
 def guard_context(db: dict, user_id: str | None, name: str, kwargs: dict) -> dict:

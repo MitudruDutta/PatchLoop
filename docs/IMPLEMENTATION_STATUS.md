@@ -1,6 +1,6 @@
 # Implementation status and document audit
 
-**Reviewed:** 5 October 2026 (Asia/Kolkata). **Scope:** README, PRD v0.4, manuscript/LaTeX/PDF v0.3 snapshot, source/reference data and local implementation. Engineering checks and one exploratory live repair do not establish a completed research study. See [research weaknesses](RESEARCH_WEAKNESSES.md).
+**Reviewed:** 5 October 2026 (Asia/Kolkata). **Scope:** README, PRD v0.4, manuscript/LaTeX/PDF v0.3 snapshot, source/reference data and local implementation. Local engineering checks, live conversations and exploratory generations do not establish a completed research study. See [current evidence](evidence/local-product-2026-10-05.json) and [research weaknesses](RESEARCH_WEAKNESSES.md).
 
 ## Acceptance-gate correction
 
@@ -26,22 +26,35 @@ The run started at `2026-10-04T18:46:21Z`, which is 5 October in the workspace t
 
 ## What works
 
+The local product now connects native conversations, a model-driven tester, trusted effects, bounded repair, version promotion and retesting. A full scripted-provider integration passed the actual private panels and complete archive gate. This proves orchestration behavior; the scripted source is not live model evidence. A live reference-condition campaign used six model calls and 27,069 tokens, with one tester turn and no observed violation.
+
+The richer adapter experiment made six live generation calls across three exploratory runs. All candidates failed boundaries: nested-record interpretation, native-error preservation, public-tool overblocking and, in one earlier candidate, cross-user profile/address access. None reached promotion. The gate was not weakened. Each run made a functional Tavily search with three results. The final run was explicitly continued from two to three total candidates on the same private suite.
+
+The last candidate's fresh post-rejection panels also failed authorized address changes because it assumed a `user_id` field inside user records; real user identifiers are dictionary keys. These diagnostics did not override its failed boundary or authorize promotion. Boundary-schema/native-error expectations need independent review. The current prompt derives actual record fields from the fixture; that improvement is locally tested without claiming another live generation. An accepted live adapter and a live discovered-incident repair/retest remain open gates.
+
 | Component | Evidence | Limit |
 |---|---|---|
 | Baseline replay | All 635 tasks reproduce the pinned reference final-state hashes | State equality alone cannot detect disclosures or changed outputs |
 | Trusted session | First successful lookup binds identity; failed lookup does not; subsequent lookup cannot replace it | Email/name/ZIP lookup is benchmark identification, not verified real-world authentication |
-| Reference guard | Nine user/order tools reject unauthenticated or cross-user access before invocation | Handwritten; confirmation and broader retail-policy enforcement are pending |
+| Reference guard | Nine user/order tools reject unauthenticated or cross-user access before invocation; conversations enforce exact-action consent | Handwritten; broader retail-policy enforcement is pending |
 | State evaluator | Compares actual user/order/product changes; records changes even when tools raise | Trusted broker interpreter is separate from candidate execution; scope is known retail effects |
 | Disclosure evaluator | Records unauthorized successful profile/order reads without requiring a state change | Scoped to the two known JSON-returning read tools |
 | Tool trace | Copies arguments/results, identities, record changes, state hashes, attempted/executed labels and guard hash | Broker is trusted; candidate process supplies decisions, never evaluation scores |
 | Offline comparison | Two unauthorized attempts execute in baseline; guard contains both; legitimate cancellation succeeds | Deterministic recorded tool calls, not stochastic agent behavior |
 | Guarded utility replay | 634/635 tasks preserve every output and final state; the remaining identity conflict is exposed | Fixture users are seeded; no confirmation turns exist; public cases are not sealed final tests |
 | Provider clients | Catalog and live inference verified; integrated repair consumed three Tavily results | No measured benefit from retrieved guidance; failed calls are exposed |
-| Candidate executor | Bubblewrap namespace, clean environment, no project/fixture/test/credential mounts or external network; CPU/memory/file/process/descriptor/wall limits | Linux-only; finite adversarial tests are not a universal isolation proof |
-| Repair worker | Maximum three candidates; original incident, boundary checks, full archive coverage/output/state checks and failures retained | One synthetic incident, one codebase, no end-to-end agent campaign or sealed generalization |
-| Version activation | Exact source hash, immutable artifacts, locked compare-and-swap parent check | Local trusted orchestration; no PR service or public multi-user hosting |
+| Candidate executor | Read-only bubblewrap root/dev, no temporary directory; optional candidate-only Docker image; clean environment/network and resource limits | Linux-only; finite probes do not establish universal isolation or public-host readiness |
+| Repair worker | Up to three candidates; recorded tester incident plus fixed regression, complete coverage/output/state checks, development/sealed checks and failures retained | Accepted live repair remains the fixed-rule condition; richer live candidates were rejected |
+| Version activation | Exact source hash, immutable artifacts, locked compare-and-swap parent/interface check | Local trusted orchestration; no automatic production deployment |
+| Support agent | Native Nemotron tool calls through dispatcher; complete messages, request accounting, trace and changed records | Live smoke completed; one synthetic domain and bounded sessions |
+| Consent | External exact yes, single use, exact arguments/identity/version, ten-minute expiry and timestamped replay | Fixed guard uses separate enforcement; adapter decides from trusted consent metadata |
+| Adversarial tester | Nemotron customer messages; signatures derived from executed tool effects; zero findings retained | One small live reference campaign; no robust attack-rate estimate |
+| Closed loop | Tester finding starts repair; exact recorded calls are checked; accepted version is challenged again | Full gate demonstrated with a scripted provider, not live adapter success |
+| Dashboard | Local HTML views for conversation/effects/source/checks; challenge and reproduction actions | Desktop/mobile browser checks use a scripted provider; binds only to loopback |
+| Reproduction/export | Frozen run source and observed effects; private-material-free patch/evidence/PR-description bundle | Relies on trusted saved validation files; does not certify provider origin |
+| Four-condition runner | Frozen discovery/evaluation conversations, matched candidate limits/temperature and shared private panels | No measured live four-condition study yet; dollar cost is unknown |
 
-The current full suite verifies **71 passing cases**. New regressions cover the ID-specific bypass, development-ID memorization, batch-dependent unsafe behavior, namespace/module state, private per-run seeds, feedback exclusions, sealed rejection/timeout stopping, manifest-aware CLI success/failure and batch fallback. Earlier checks cover actual unauthorized effects, lookup/session spoofing, tampering, limits, complete archive coverage, budgets and exact-source promotion. Passing these cases does not establish universal security.
+The final local counts are recorded in [current evidence](evidence/local-product-2026-10-05.json). Tests cover the ID-specific bypass, development-ID memorization, batch-dependent behavior, filesystem state channels, private seeds, feedback exclusions, sealed failure stopping, manifest/coverage integrity, native provider envelopes, consent spoofing/expiry, actual adapter effects, complete discovery/repair/retest, shared budgets, origin/host/path boundaries, frozen bundles and public evidence filtering. Passing these cases does not establish universal security.
 
 Before correction, an installed wheel reproduced the full archive under the original gate. The corrected wheel was separately built and installed into a fresh temporary directory: from `/tmp` with an empty environment, it loaded the manifest/archive, generated both 230-case panels and executed a stateful guard batch with isolated contexts. Full corrected-gate revalidation ran from the workspace without provider calls. Saved source, historical model response and active artifact agree on hash `c38fa12f2aeb244d1795e40f5447907de5fd8cdbd99b2728d4dd50471ed605de`. Vendored tools/data remain unchanged. Installation checks are not treated as security evidence.
 
@@ -66,7 +79,7 @@ The local [utility manifest](../patchloop/utility_manifest.json) binds the uncha
 |---|---|---|
 | All 1,375 reference actions are policy-correct | `test-64` conflicts with task-user seeding; actions are a reference archive requiring review | Freeze utility semantics before using them as a patch-acceptance oracle |
 | Final-state equality establishes legitimate behavior | A denied private read can leave identical state | Compare outputs and state; test unauthorized disclosure explicitly |
-| Earlier README implied a complete repair/publication workflow | Local generated ownership repair now works; PR publication is pending | Keep current capabilities and planned services explicit |
+| Earlier README implied a complete repair/publication workflow | Local conversations, repair/retest, HTML dashboard and review bundles exist; public hosting remains pending | Keep current capabilities and planned services explicit |
 | PRD says no implementation exists | Partial baseline now exists | Status points here; G0 remains incomplete until evaluator/executor boundaries are validated |
 | Confirmation transcript is exclusive to agents | Non-agent systems also have conversation/consent state | Specify trusted, action-bound consent; do not use transcript presence as novelty |
 | Reference calls can test confirmation | They contain actions, not the required explanation and user confirmation turns | Add separately authored consent conversations before claiming confirmation enforcement |
@@ -112,10 +125,11 @@ For integrated repair, export ignored `.env` configuration with `set -a; source 
 | Priority | Concrete next artifact | Acceptance condition |
 |---|---|---|
 | Implemented locally | Utility manifest and isolated candidate execution | Hash-bound conflict semantics and negative cases exist; independent review and broader hosting integrity tests remain pending |
-| 3 | Bounded Nemotron target-agent loop | Real runtime calls and complete traces; serial tool execution; fixed budgets; benchmark identification limitation disclosed |
+| Implemented locally | Bounded Nemotron target-agent loop | Real runtime call smoke and complete traces; serial tools; fixed budgets; fixture identification limitation disclosed |
 | Implemented locally | Frozen-model guard generation and Tavily guidance | Actual diff, bounded budget, complete public replay, retained failures, exact-source promotion and runtime guidance are verified; multiple incident streams and independent final cases remain pending |
-| 6 | Four-condition usefulness pilot | Unrepaired, independent sampling, feedback repair and direct enforcement compared at declared budgets; human reference labor included |
-| 7 | Dashboard/reproduction bundle and project PR output | Viewer ties evidence to source/fixture/checker versions; independent install reproduces outcome; publication targets only this project's repository |
-| Later | Confirmation and RL | Explicit consent semantics and fresh conversations first; RL needs pinned checkpoint/configuration, rollout/reward/update/save/reload, measured cost and signal, matched SFT/extra-training controls |
+| Next | Accepted live adapter and discovered-incident cycle | Preserve current gates; retain failed attempts; obtain a complete live discovery/repair/retest without a fixed-demo substitute |
+| Next | Measured four-condition pilot | Runner exists; collect matched-budget results, costs and human reference labor before making usefulness claims |
+| Implemented locally | Dashboard/reproduction/review output | Browser-tested local viewer and frozen source/effects bundle; public multi-user hosting and deployment remain pending |
+| Later | RL | Consent semantics are implemented; RL still requires data, signal, pinned training/update/save/reload evidence, measured costs and matched SFT controls |
 
-User-provided credentials remain in ignored local `.env` with restrictive permissions, never source or published evidence. Live inference, Tavily use, generated execution and local promotion occurred. Deployment, PR creation and RL training did not. A coherent demo experience, public test access, video and measured service feedback remain pending.
+User-provided credentials remain in ignored local `.env` with restrictive permissions, never source or published evidence. Live conversations, tester inference, Tavily use, fixed-rule generation and local promotion occurred. A local demo experience and review bundles exist. Public deployment/test access, measured service feedback and RL remain pending. Release materials are maintained outside this repository.
