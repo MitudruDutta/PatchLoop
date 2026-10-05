@@ -2,7 +2,9 @@
 
 ## Product requirements, architecture, and research protocol
 
-**Status (updated 5 October 2026):** Native Nemotron conversations, adversarial testing, action-bound consent, a repair/retest loop, a local HTML dashboard and offline reproduction/review bundles are implemented. A live conversation and one small tester campaign completed. The original fixed-rule generated guard remains valid under the corrected gate. The richer adapter mode passes a full scripted-provider workflow, but six live candidates were rejected; none activated. The four-condition runner exists without measured live comparison results. Public hosting, AI Cloud deployment, independent final evaluation and RL remain pending. All 635 archive outcomes stay visible, including `test-64`; all 634 policy-consistent cases remain the preservation denominator. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md), [current evidence](evidence/local-product-2026-10-05.json) and [research weaknesses](RESEARCH_WEAKNESSES.md).
+**Related PRDs:** [platform: SDK, API access, documentation website, organizations and pricing](platform.md); [RL environment](rl-environment.md).
+
+**Status (updated 5 October 2026):** Native Nemotron conversations, adversarial testing, action-bound consent, a repair/retest loop, a local HTML dashboard and offline reproduction/review bundles are implemented. A live conversation and one small tester campaign completed. The original fixed-rule generated guard remains valid under the corrected gate. The richer adapter mode passes a full scripted-provider workflow, but six live candidates were rejected; none activated. The four-condition runner exists without measured live comparison results. Public hosting, AI Cloud deployment, independent final evaluation and RL remain pending. All 635 archive outcomes stay visible, including `test-64`; all 634 policy-consistent cases remain the preservation denominator. See [implementation status](../status/implementation.md), [current evidence](../evidence/local-product-2026-10-05.json) and [research weaknesses](../research/weaknesses.md).
 
 **Prepared:** 3 October 2026, Asia/Kolkata.
 
@@ -10,7 +12,7 @@
 
 **One sentence (planned product):** PATCHLOOP tests tool-using agents, finds prompt-only policy rules, generates guard patches, and records whether legitimate work still succeeds on specified tests.
 
-**Research extension:** Train the repair model from executed patch outcomes, then test whether that learned ability transfers to unfamiliar applications while preserving legitimate behavior and earlier repairs. Detailed requirements appear in Sections 13–16 and the companion `paper/PATCHLOOP_RL_Research_Manuscript.md`. The manuscript still describes the earlier two-integration pilot; update it from real data once the MVP runs.
+**Research extension:** Train the repair model from executed patch outcomes, then test whether that learned ability transfers to unfamiliar applications while preserving legitimate behavior and earlier repairs. Detailed requirements appear in Sections 13–16 and the companion `docs/research/paper/PATCHLOOP_RL_Research_Manuscript.md`. The manuscript still describes the earlier two-integration pilot; update it from real data once the MVP runs.
 
 **Public demo hook (use only after demonstrated):** “Watch this agent act on another customer's account, inspect its generated guard, and replay both versions.”
 

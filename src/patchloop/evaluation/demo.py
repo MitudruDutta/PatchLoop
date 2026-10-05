@@ -4,8 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from patchloop.apps import tau_retail as app
-from patchloop.dispatcher import RetailDispatcher
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.dispatcher import RetailDispatcher
 
 
 def comparison() -> dict:

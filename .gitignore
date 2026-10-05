@@ -17,3 +17,7 @@ venv/
 build/
 *.log
 *.aux
+
+# RL workstream outputs
+rl/data/
+rl/runs/

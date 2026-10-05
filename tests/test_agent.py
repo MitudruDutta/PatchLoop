@@ -2,11 +2,11 @@ import json
 
 import pytest
 
-from patchloop.agent import Limits, SupportSession, propose, replay_conversation
-from patchloop.apps import tau_retail as app
-from patchloop.confirmation import ConfirmationLedger
-from patchloop.dispatcher import RetailDispatcher
-from patchloop.policy import MUTATION_TOOLS
+from patchloop.evaluation.agent import Limits, SupportSession, propose, replay_conversation
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.confirmation import ConfirmationLedger
+from patchloop.runtime.dispatcher import RetailDispatcher
+from patchloop.runtime.policy import MUTATION_TOOLS
 from patchloop.sandbox import SandboxGuard
 
 

@@ -13,11 +13,11 @@ from pathlib import Path
 import secrets
 from uuid import uuid4
 
-from patchloop.campaign import BudgetedClient, run_campaign, scenarios
+from patchloop.evaluation.campaign import BudgetedClient, run_campaign, scenarios
 from patchloop.providers import NebiusClient
-from patchloop.repair import run_repair, write_json
-from patchloop.security import create_suite
-from patchloop.versions import VersionStore
+from patchloop.repair.loop import run_repair, write_json
+from patchloop.repair.validation import create_suite
+from patchloop.repair.versions import VersionStore
 
 
 def run_comparison(output, model, *, client=None, count=1, turns=1, attempts=2, requests=80):

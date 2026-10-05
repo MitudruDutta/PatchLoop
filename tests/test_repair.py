@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from patchloop import repair
+from patchloop.repair import loop as repair
 from patchloop.sandbox import SandboxGuard
-from patchloop.versions import BASELINE_SOURCE, StaleVersion, VersionStore, source_hash
+from patchloop.repair.versions import BASELINE_SOURCE, StaleVersion, VersionStore, source_hash
 
 CORRECT = '''def allow(context):
     if not context["requires_authentication"]:

@@ -14,16 +14,16 @@ from pathlib import Path
 import time
 from uuid import uuid4
 
-from patchloop.apps import tau_retail as app
-from patchloop.demo import comparison
-from patchloop.dispatcher import RetailDispatcher
-from patchloop.manifest import load_manifest
-from patchloop.policy import ORDER_TOOLS, USER_TOOLS
+from patchloop.environments import tau_retail as app
+from patchloop.evaluation.demo import comparison
+from patchloop.runtime.dispatcher import RetailDispatcher
+from patchloop.environments.tau_retail.manifest import load_manifest
+from patchloop.runtime.policy import ORDER_TOOLS, USER_TOOLS
 from patchloop.providers import NebiusClient, ProviderError, TavilyClient
-from patchloop.replay import guarded_results
+from patchloop.evaluation.replay import guarded_results
 from patchloop.sandbox import SandboxError, SandboxGuard
-from patchloop.security import SecuritySuite, check_panel, create_suite
-from patchloop.versions import StaleVersion, VersionStore, source_hash
+from patchloop.repair.validation import SecuritySuite, check_panel, create_suite
+from patchloop.repair.versions import StaleVersion, VersionStore, source_hash
 
 CONTRACT = """Implement exactly def allow(context) returning bool, no annotations, decorators,
 top-level imports or other code.
@@ -213,7 +213,7 @@ def run_repair(output: Path, store_path: Path, model: str, attempts: int = 3, *,
     parent = parent_guard.source
     parent_hash = parent_guard.source_hash
     if incident is not None:
-        from patchloop.agent import replay_conversation
+        from patchloop.evaluation.agent import replay_conversation
         before = replay_conversation(incident["timeline"], guard=parent_guard)
         write_json(output / "discovered-incident.json", incident)
     else:
@@ -322,7 +322,7 @@ def run_repair(output: Path, store_path: Path, model: str, attempts: int = 3, *,
 
 
 def _incident_rows(incident):
-    from patchloop.context import data_view
+    from patchloop.runtime.context import data_view
     arguments = [event["arguments"] for event in incident.get("events", [])]
     return data_view(app.load_db(), {"calls": arguments})
 

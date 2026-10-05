@@ -2,11 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from patchloop.apps import tau_retail as app
-from patchloop.context import guard_input
-from patchloop.dispatcher import RetailDispatcher
-from patchloop.confirmation import ConfirmationLedger
-from patchloop.security import check_panel, suite_from_seed
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.context import guard_input
+from patchloop.runtime.dispatcher import RetailDispatcher
+from patchloop.runtime.confirmation import ConfirmationLedger
+from patchloop.repair.validation import check_panel, suite_from_seed
 from patchloop.sandbox import SandboxGuard
 
 # Handwritten comparator. Never label this source a model-generated result.
@@ -135,7 +135,7 @@ def test_guard_that_gates_reads_on_consent_cannot_be_accepted(tmp_path):
     assert not panel["passed"]
     assert any(label.startswith(("get_order_details:authorized", "list_all_product_types:public"))
                for label in panel["failures"])
-    from patchloop.repair import validate_candidate
+    from patchloop.repair.loop import validate_candidate
     result = validate_candidate(guard, tmp_path)
     assert not result["accepted"] and not result["security_development"]["passed"]
 
@@ -147,7 +147,7 @@ def test_adapter_validation_uses_real_rows_not_invented_ones(tmp_path):
     source = REFERENCE.replace(
         'owner = args.get("user_id") if tool in user_tools else',
         'owner = context["data"]["users"].get(args.get("user_id"), {"user_id": None}).get("user_id") if tool in user_tools else')
-    from patchloop.repair import validate_candidate
+    from patchloop.repair.loop import validate_candidate
     result = validate_candidate(SandboxGuard(source, interface="adapter"), tmp_path)
     assert result["boundary_cases"] == 0
     assert not result["accepted"]
@@ -169,7 +169,7 @@ def test_safe_guard_that_denies_null_user_id_is_not_rejected(tmp_path, monkeypat
     def stop(*args, **kwargs):
         raise ReachedIncidentReplay
 
-    from patchloop import repair
+    from patchloop.repair import loop as repair
     monkeypatch.setattr(repair, "replay_incident", stop)  # skip the slow later stages
     with pytest.raises(ReachedIncidentReplay):
         repair.validate_candidate(guard, tmp_path, suite=suite)

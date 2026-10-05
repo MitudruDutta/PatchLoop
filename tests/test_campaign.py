@@ -1,8 +1,8 @@
 import json
 
-from patchloop import campaign
-from patchloop.agent import replay_conversation
-from patchloop.apps import tau_retail as app
+from patchloop.evaluation import campaign
+from patchloop.evaluation.agent import replay_conversation
+from patchloop.environments import tau_retail as app
 from patchloop.providers import ProviderError
 from patchloop.sandbox import SandboxGuard
 import pytest
@@ -54,7 +54,7 @@ def test_zero_findings_are_preserved_without_repair(tmp_path, monkeypatch):
     user = context["authenticated_user_id"]
     return user is not None and context["owner_id"] in (None, user)
 '''
-    from patchloop.versions import VersionStore, source_hash, BASELINE_SOURCE
+    from patchloop.repair.versions import VersionStore, source_hash, BASELINE_SOURCE
     store = tmp_path / "versions"
     VersionStore(store).promote(correct, expected_parent=source_hash(BASELINE_SOURCE), evidence_hash="test")
     def unexpected(*args, **kwargs):
@@ -89,8 +89,8 @@ def test_missing_target_observation_is_partial(tmp_path):
 
 
 def test_full_discovery_repair_and_retest_uses_actual_gate(tmp_path, monkeypatch):
-    from patchloop import repair
-    from patchloop.versions import VersionStore
+    from patchloop.repair import loop as repair
+    from patchloop.repair.versions import VersionStore
     cases = campaign.scenarios(b"complete-cycle-test-only", 1)
     monkeypatch.setattr(campaign, "scenarios", lambda *args: cases)
     class Model(DishonestScenario):

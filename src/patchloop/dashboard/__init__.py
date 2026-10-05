@@ -14,12 +14,12 @@ from urllib.parse import urlsplit
 from uuid import uuid4
 import zipfile
 
-from patchloop.agent import SupportSession
-from patchloop.campaign import BudgetedClient, run_campaign, run_cycle, scenarios
-from patchloop.repair import write_json
+from patchloop.evaluation.agent import SupportSession
+from patchloop.evaluation.campaign import BudgetedClient, run_campaign, run_cycle, scenarios
+from patchloop.repair.loop import write_json
 from patchloop.providers import NebiusClient, ProviderError
 from patchloop.sandbox import SandboxGuard
-from patchloop.versions import VersionStore
+from patchloop.repair.versions import VersionStore
 
 STATIC = Path(__file__).with_name("web")
 
@@ -148,7 +148,7 @@ class LocalProduct:
             archive.writestr("guard.py", job["source"])
             archive.writestr("reproduce.json", json.dumps(record, indent=2))
             archive.writestr("README.txt", "Use the same PatchLoop checkout and Python environment.\n"
-                "python -m patchloop.reproduce reproduce.json --guard guard.py\n"
+                "python -m patchloop.evaluation.reproduce reproduce.json --guard guard.py\n"
                 "This replays recorded calls without inference and checks the recorded effects.\n"
                 "For fresh private checks and complete utility replay:\n"
                 f"python -m patchloop.repair --verify guard.py --interface {record['interface']}\n"

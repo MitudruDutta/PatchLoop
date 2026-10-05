@@ -1,6 +1,6 @@
 # Candid research assessment and practical improvements
 
-Reviewed 5 October 2026 against PRD v0.4, manuscript/LaTeX/PDF v0.3 and the current implementation. This is an internal assessment, not peer review. [Live evidence](evidence/live-repair-2026-10-05.json) establishes one narrow frozen-model repair; it does not establish the proposed study.
+Reviewed 5 October 2026 against PRD v0.4, manuscript/LaTeX/PDF v0.3 and the current implementation. This is an internal assessment, not peer review. [Live evidence](../evidence/live-repair-2026-10-05.json) establishes one narrow frozen-model repair; it does not establish the proposed study.
 
 ## Verdict
 
@@ -49,4 +49,4 @@ RL becomes reasonable only after valid patches vary in success across sufficient
 
 ## What can be claimed now
 
-The historical live candidate passed its original fixed suite and public archive, but that gate accepted identity-specific bypasses and is insufficient security evidence. The unchanged candidate now passes randomized development/sealed panels, actual effects and full replay. Native conversations, local HTML UI, trusted consent, a tester and a repair/retest workflow exist. The richer read-only adapter interface is implemented, with zero accepted candidates in six live exploratory draws. Current evidence supports a runnable local engineering prototype, not superiority, attack robustness, generalization, research novelty or RL improvement. See the separate [evidence summary](evidence/local-product-2026-10-05.json); failed experiments are part of the result.
+The historical live candidate passed its original fixed suite and public archive, but that gate accepted identity-specific bypasses and is insufficient security evidence. The unchanged candidate now passes randomized development/sealed panels, actual effects and full replay. Native conversations, local HTML UI, trusted consent, a tester and a repair/retest workflow exist. The richer read-only adapter interface is implemented, with zero accepted candidates in six live exploratory draws. Current evidence supports a runnable local engineering prototype, not superiority, attack robustness, generalization, research novelty or RL improvement. See the separate [evidence summary](../evidence/local-product-2026-10-05.json); failed experiments are part of the result.

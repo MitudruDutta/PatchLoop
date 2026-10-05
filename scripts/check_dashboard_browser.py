@@ -8,7 +8,7 @@ from threading import Thread
 
 from playwright.sync_api import expect, sync_playwright
 
-from patchloop.campaign import scenarios
+from patchloop.evaluation.campaign import scenarios
 from patchloop.dashboard import LocalProduct, handler
 
 

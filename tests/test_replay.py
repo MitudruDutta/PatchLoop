@@ -1,7 +1,7 @@
-from patchloop import replay
-from patchloop.apps import tau_retail as app
+from patchloop.evaluation import replay
+from patchloop.environments import tau_retail as app
 from patchloop.sandbox import SandboxGuard
-from patchloop.versions import source_hash
+from patchloop.repair.versions import source_hash
 
 
 def deny_all(db, name, kwargs):

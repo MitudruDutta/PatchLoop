@@ -9,11 +9,11 @@ import json
 import argparse
 from multiprocessing import Pool
 
-from patchloop.apps import tau_retail as app
-from patchloop.dispatcher import RetailDispatcher, state_hash
-from patchloop.context import guard_input
-from patchloop.manifest import load_manifest
-from patchloop.policy import AUTH_TOOLS, guard_context
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.dispatcher import RetailDispatcher, state_hash
+from patchloop.runtime.context import guard_input
+from patchloop.environments.tau_retail.manifest import load_manifest
+from patchloop.runtime.policy import AUTH_TOOLS, guard_context
 
 
 class _BatchedGuard:

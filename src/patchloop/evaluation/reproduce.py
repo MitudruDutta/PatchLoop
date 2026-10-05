@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from patchloop.agent import replay_conversation
+from patchloop.evaluation.agent import replay_conversation
 from patchloop.sandbox import SandboxGuard
 
 

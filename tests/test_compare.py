@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from patchloop import compare
+from patchloop.evaluation import compare
 
 
 def test_four_conditions_share_cases_budget_and_panels_without_cross_feedback(tmp_path, monkeypatch):
