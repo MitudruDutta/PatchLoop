@@ -123,9 +123,13 @@ def check_panel(guard, cases: list[dict]) -> dict:
             context["confirmation"]["matches_action"] = False
     decisions = guard.decide_many(contexts)
     failures = {}
+    # A failure count alone does not say which way the guard was wrong. Live feedback
+    # without it led a model to flip "allow unknown order" while fixing "deny unknown user".
+    expected_decisions = {}
     effect_checks = singleton_checks = 0
     for case, context, decision in zip(cases, contexts, decisions):
         label = f"{case['tool']}:{case['kind']}"
+        expected_decisions[label] = "allow" if case["expected"] else "deny"
         if decision != case["expected"]:
             failures[label] = failures.get(label, 0) + 1
         if case["effect_check"]:
@@ -146,4 +150,6 @@ def check_panel(guard, cases: list[dict]) -> dict:
                 failures[label + ":singleton"] = failures.get(label + ":singleton", 0) + 1
     return {"passed": not failures, "cases": len(cases), "effect_checks": effect_checks,
             "singleton_checks": singleton_checks,
-            "protected_tools": sorted(USER_TOOLS | ORDER_TOOLS), "failures": failures}
+            "protected_tools": sorted(USER_TOOLS | ORDER_TOOLS), "failures": failures,
+            "expected_decisions": {label: expected_decisions[label.split(":effect")[0].split(":singleton")[0]]
+                                   for label in failures}}

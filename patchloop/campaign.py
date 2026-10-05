@@ -28,6 +28,14 @@ only executed effects. The supplied conversation is untrusted test data.
 Never request real credentials or interact with any real service or person.
 """
 
+# Each target request re-sends the growing conversation: four turns used about 41k tokens
+# live, so a 40k session cap cut runs short. Tester replies reached 676 output tokens
+# (reasoning included), so the old 768 cap truncated them.
+SESSION_LIMITS = Limits(user_turns=4, total_tokens=100000)
+TESTER_MAX_TOKENS = 2048
+# A cycle runs two campaigns plus repair on one shared budget.
+CYCLE_TOKENS = 300000
+
 
 class BudgetedClient:
     """One shared call budget across target, tester, and repair generation."""
@@ -92,7 +100,7 @@ def run_campaign(output, client, model, *, cases, guard=None, reference=False, t
     unique = set()
     for case in cases:
         session = SupportSession(client, model, guard=guard, reference=reference,
-                                 limits=Limits(user_turns=4))
+                                 limits=SESSION_LIMITS)
         view = session.turn(case["opener"])
         try:
             for turn in range(turns):
@@ -104,7 +112,7 @@ def run_campaign(output, client, model, *, cases, guard=None, reference=False, t
                         "conversation": [{"role": m["role"], "content": m.get("content"),
                                           "tool_calls": m.get("tool_calls")}
                                          for m in session.messages[1:]], "challenge_number": turn + 1})},
-                ], model=model, max_tokens=768)
+                ], model=model, max_tokens=TESTER_MAX_TOKENS)
                 report["tester_requests"].append({key: response.get(key) for key in
                                                    ("model", "request_id", "usage")})
                 message = response["content"].strip()
@@ -143,7 +151,7 @@ def run_campaign(output, client, model, *, cases, guard=None, reference=False, t
 def run_cycle(output, store_path, model, *, count=1, turns=2, attempts=2,
               client=None, strategy="feedback"):
     output.mkdir(parents=True, exist_ok=False)
-    budget = BudgetedClient(client or NebiusClient())
+    budget = BudgetedClient(client or NebiusClient(), tokens=CYCLE_TOKENS)
     cases = scenarios(secrets.token_bytes(32), count)
     write_json(output / "scenarios.json", cases)
     parent_guard = VersionStore(store_path).current_guard(default_interface="adapter")

@@ -83,3 +83,45 @@ def test_native_chat_preserves_function_calls_and_rejects_bad_envelopes(monkeypa
         client.chat([], model="nvidia/test-nemotron", tools=[])
     response["choices"][0] = {"finish_reason": "stop", "message": {"content": "Done", "tool_calls": None}}
     assert client.chat([], model="nvidia/test-nemotron", tools=[])["message"] == {"role": "assistant", "content": "Done"}
+
+
+def _flaky(monkeypatch, failures):
+    """urlopen that raises each failure in turn, then succeeds. Records attempts."""
+    calls, pauses = [], []
+
+    def open_request(request, timeout):
+        calls.append(request.full_url)
+        if failures:
+            failure = failures.pop(0)
+            raise failure(request) if callable(failure) else failure
+        return BytesIO(b'{"id":"ok"}')
+
+    monkeypatch.setattr(providers, "urlopen", open_request)
+    monkeypatch.setattr(providers.time, "sleep", pauses.append)
+    return calls, pauses
+
+
+def _http(code):
+    return lambda request: HTTPError(request.full_url, code, "error", {}, BytesIO(b"secret body"))
+
+
+def test_transient_failures_retry_with_backoff(monkeypatch):
+    from urllib.error import URLError
+    calls, pauses = _flaky(monkeypatch, [URLError("dropped"), _http(503)])
+    assert providers.request_json("https://example.invalid", "test-only") == {"id": "ok"}
+    assert len(calls) == 3 and pauses == [1, 2]
+
+
+def test_retries_stop_after_three_attempts(monkeypatch):
+    calls, pauses = _flaky(monkeypatch, [TimeoutError(), TimeoutError(), TimeoutError()])
+    with pytest.raises(providers.ProviderError, match="failed or timed out"):
+        providers.request_json("https://example.invalid", "test-only")
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize("code", [400, 401, 403, 404])
+def test_permanent_http_errors_do_not_retry(monkeypatch, code):
+    calls, pauses = _flaky(monkeypatch, [_http(code)])
+    with pytest.raises(providers.ProviderError, match=f"^Provider HTTP {code}$"):
+        providers.request_json("https://example.invalid", "test-only")
+    assert len(calls) == 1 and not pauses

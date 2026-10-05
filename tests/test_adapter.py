@@ -181,3 +181,15 @@ def test_unknown_user_is_denied_and_unknown_order_keeps_native_error():
     expected = {case["tool"]: case["expected"] for case in cases}
     assert expected["get_user_details"] is False and expected["modify_user_address"] is False
     assert expected["get_order_details"] is True and expected["cancel_pending_order"] is True
+
+
+def test_panel_feedback_states_the_expected_decision():
+    # Live attempt 2 allowed unknown users; with counts only, attempt 3 over-corrected.
+    source = REFERENCE.replace(
+        'owner = args.get("user_id") if tool in user_tools else',
+        'owner = (args.get("user_id") if args.get("user_id") in context["data"]["users"] else None) if tool in user_tools else')
+    result = check_panel(SandboxGuard(source, interface="adapter"),
+                         suite_from_seed(b"offline-test-only").development)
+    assert not result["passed"]
+    assert result["expected_decisions"] == {label: "deny" for label in result["failures"]}
+    assert "get_user_details:unknown_resource" in result["failures"]
