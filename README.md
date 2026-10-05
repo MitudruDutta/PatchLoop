@@ -150,7 +150,7 @@ rl/                         RL environment and training workstream
 services/api/               Hosted API and API-key access workstream
 website/                    Public documentation website workstream
 docs/
-  prd/                      engine.md, platform.md, rl-environment.md
+  prd/                      engine.md, agent-integration.md, platform.md, rl-environment.md
   status/                   Implementation status and acceptance gates
   research/                 Research weaknesses and the protocol manuscript (paper/)
   evidence/                 Credential-free live evidence

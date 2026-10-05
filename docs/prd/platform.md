@@ -50,18 +50,13 @@ The control plane never receives customer source code or customer data unless th
 
 ## 6. Generic integration (dependency on the engine)
 
-The SDK has little value until it works with agents other than τ-bench retail. This is an **engine** deliverable that the platform depends on. **Owner: open decision.**
+The SDK has little value until it works with agents other than τ-bench retail. The full specification is in the [agent integration PRD](agent-integration.md). **Owner:** proposed Mitudru Dutta, to be confirmed.
 
-| Input from the customer | Form |
-|---|---|
-| Tools | Python callables, OpenAI tool schemas, or MCP servers, plus a way to run them against a test environment |
-| Identity | The session's principal from the customer's own authentication, never from model output |
-| Resource map | For each tool argument: the resource it names and the field that names its owner. The model proposes it; a human confirms it. |
-| Policy | The customer's rules in plain text |
-| Utility suite | Recorded legitimate tool calls. Record mode captures them from staging traffic. |
-| State probe (optional) | Read access to changed records for stronger effect evidence |
-
-Connector order (recommended): Python SDK middleware first, then an MCP gateway.
+What the platform needs from it:
+- the Environment interface, the configuration file (`patchloop.yaml`) and the connectors (Python first, then MCP) as public SDK API;
+- **level A** support (tools, identity hook, resource map, recordings; no test environment) so that most customers can start;
+- **level B** support (plus a resettable test environment) for the full find, repair and retest loop;
+- evidence bundles that state which level produced them.
 
 ## 7. Organizations, members and roles
 
@@ -153,7 +148,7 @@ Every price below is a **starting hypothesis** to test with 3–5 design partner
 | Milestone | Target | Exit criteria |
 |---|---|---|
 | P1: SDK 0.1 | October 2026 | On PyPI, `patchloop --help` works after a clean install, documentation website live with Get started and Concepts |
-| P2: Generic integration and CI | November 2026 | One agent other than τ-bench works through the Python connector. The GitHub Action runs in a sample repository. |
+| P2: Generic integration and CI | November 2026 | Steps 1–3 of the agent integration PRD are done: one agent other than τ-bench works through the Python connector. The GitHub Action runs in a sample repository. |
 | P3: Control plane alpha | December 2026 | Organizations, projects, roles, API keys, run and evidence upload, webhooks |
 | P4: Paid beta | Q1 2027 | Billing live, 3–5 design partners on Team or Business, pricing revised from their feedback |
 
@@ -165,7 +160,7 @@ Install to first finding (time), weekly active projects, runs per project, share
 
 | Risk or question | Response |
 |---|---|
-| Who owns the generic integration? | Decide before P2. Without it, the SDK only demonstrates τ-bench. |
+| Who owns the generic integration? | Proposed: Mitudru Dutta (see the agent integration PRD). Confirm before P2. Without it, the SDK only demonstrates τ-bench. |
 | MCP gateway before or after the Python connector? | Recommended after. Revisit if design partners use MCP mostly. |
 | Overlap with red-teaming tools | Import their findings. Compete on repair and proof. |
 | Buyers may not trust generated guards | The guard pull request with evidence is the main feature. Test this in interviews first. |
