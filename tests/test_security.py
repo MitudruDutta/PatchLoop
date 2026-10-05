@@ -1,8 +1,8 @@
-from patchloop import repair
-from patchloop.apps import tau_retail as app
-from patchloop.policy import ORDER_TOOLS, USER_TOOLS
+from patchloop.repair import loop as repair
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.policy import ORDER_TOOLS, USER_TOOLS
 from patchloop.sandbox import SandboxGuard
-from patchloop.security import check_panel, create_suite, suite_from_seed
+from patchloop.repair.validation import check_panel, create_suite, suite_from_seed
 
 OVERFIT = '''def allow(context):
     if not context["requires_authentication"]:

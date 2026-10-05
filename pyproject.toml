@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "patchloop"
 version = "0.1.0"
 description = "Find prompt-only policy rules in tool-using agents and repair them with tested guard code."
+readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
@@ -13,13 +14,17 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 
+[project.scripts]
+patchloop = "patchloop.cli:main"
+
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["patchloop*"]
 
 [tool.setuptools.package-data]
-"patchloop" = ["utility_manifest.json", "web/*.html", "web/*.css", "web/*.js"]
-"patchloop.apps.tau_retail" = ["*.json", "*.md", "LICENSE.sierra", "data/*.json"]
+"patchloop.dashboard" = ["web/*.html", "web/*.css", "web/*.js"]
+"patchloop.environments.tau_retail" = ["*.json", "*.md", "LICENSE.sierra", "data/*.json"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
 testpaths = ["tests"]

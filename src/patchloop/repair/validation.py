@@ -12,11 +12,11 @@ from pathlib import Path
 import random
 import secrets
 
-from patchloop.apps import tau_retail as app
-from patchloop.dispatcher import RetailDispatcher
-from patchloop.context import guard_input
-from patchloop.confirmation import ConfirmationLedger
-from patchloop.policy import MUTATION_TOOLS, ORDER_TOOLS, USER_TOOLS, guard_context
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.dispatcher import RetailDispatcher
+from patchloop.runtime.context import guard_input
+from patchloop.runtime.confirmation import ConfirmationLedger
+from patchloop.runtime.policy import MUTATION_TOOLS, ORDER_TOOLS, USER_TOOLS, guard_context
 
 
 @dataclass(frozen=True)

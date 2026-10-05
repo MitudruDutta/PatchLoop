@@ -4,7 +4,7 @@ from hashlib import sha256
 import json
 from pathlib import Path
 
-from patchloop.apps import tau_retail as app
+from patchloop.environments import tau_retail as app
 
 
 def load_manifest() -> dict:

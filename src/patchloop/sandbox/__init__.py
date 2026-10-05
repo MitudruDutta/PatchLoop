@@ -88,7 +88,7 @@ class SandboxGuard:
                 if Path(path).exists():
                     command.extend(["--ro-bind", path, path])
             command.extend(["--proc", "/proc", "--dev", "/dev",
-                            "--ro-bind", str(Path(__file__).with_name("_guard_worker.py")),
+                            "--ro-bind", str(Path(__file__).with_name("worker.py")),
                             "/worker.py", "--remount-ro", "/", "--remount-ro", "/dev",
                             "--chdir", "/", "--",
                             "/usr/bin/python3", "-I", "-S", "/worker.py"])

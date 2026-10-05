@@ -11,8 +11,8 @@ import pytest
 
 from patchloop.dashboard import LocalProduct, handler
 from patchloop.providers import ProviderError
-from patchloop.reproduce import reproduce
-from patchloop.versions import BASELINE_SOURCE, VersionStore, source_hash
+from patchloop.evaluation.reproduce import reproduce
+from patchloop.repair.versions import BASELINE_SOURCE, VersionStore, source_hash
 
 
 class TestClient:

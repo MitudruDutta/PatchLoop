@@ -5,7 +5,7 @@ Usage:
     git -C /tmp/tau-bench checkout 59a200c6d575d595120f1cb70fea53cef0632f6b
     python scripts/vendor_tau_bench.py /tmp/tau-bench
 
-Copies the retail tools, data, and policy into patchloop/apps/tau_retail/ and
+Copies the retail tools, data, and policy into src/patchloop/environments/tau_retail/ and
 writes reference_calls.json. Expected hashes are computed by running the
 *upstream* tool files, so the test suite proves the vendored copy is faithful.
 """
@@ -20,9 +20,9 @@ from pathlib import Path
 COMMIT = "59a200c6d575d595120f1cb70fea53cef0632f6b"
 TERMINATE_TOOLS = {"transfer_to_human_agents"}
 ROOT = Path(__file__).resolve().parents[1]
-DEST = ROOT / "patchloop" / "apps" / "tau_retail"
-sys.path.insert(0, str(ROOT))
-from patchloop.replay import db_hash  # noqa: E402  single definition of the state hash
+DEST = ROOT / "src" / "patchloop" / "environments" / "tau_retail"
+sys.path.insert(0, str(ROOT / "src"))
+from patchloop.evaluation.replay import db_hash  # noqa: E402  single definition of the state hash
 
 
 class _Record:

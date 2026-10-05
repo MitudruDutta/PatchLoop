@@ -5,7 +5,7 @@ from hashlib import sha256
 import json
 import time
 
-from patchloop.policy import MUTATION_TOOLS
+from patchloop.runtime.policy import MUTATION_TOOLS
 
 
 def action_digest(tool, arguments, user_id, source_hash):

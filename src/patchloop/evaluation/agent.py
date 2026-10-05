@@ -6,9 +6,9 @@ import inspect
 import json
 import time
 
-from patchloop.apps import tau_retail as app
-from patchloop.confirmation import ConfirmationLedger
-from patchloop.dispatcher import RetailDispatcher
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.confirmation import ConfirmationLedger
+from patchloop.runtime.dispatcher import RetailDispatcher
 from patchloop.providers import ProviderError
 
 CONFIRM_TOOL = {"type": "function", "function": {

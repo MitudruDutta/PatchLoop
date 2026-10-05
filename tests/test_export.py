@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from patchloop.export import export_patch
-from patchloop.versions import source_hash
+from patchloop.repair.export import export_patch
+from patchloop.repair.versions import source_hash
 
 
 def record(source):

@@ -1,12 +1,12 @@
 # Implementation status and document audit
 
-**Reviewed:** 5 October 2026 (Asia/Kolkata). **Scope:** README, PRD v0.4, manuscript/LaTeX/PDF v0.3 snapshot, source/reference data and local implementation. Local engineering checks, live conversations and exploratory generations do not establish a completed research study. See [current evidence](evidence/local-product-2026-10-05.json) and [research weaknesses](RESEARCH_WEAKNESSES.md).
+**Reviewed:** 5 October 2026 (Asia/Kolkata). **Scope:** README, PRD v0.4, manuscript/LaTeX/PDF v0.3 snapshot, source/reference data and local implementation. Local engineering checks, live conversations and exploratory generations do not establish a completed research study. See [current evidence](../evidence/local-product-2026-10-05.json) and [research weaknesses](../research/weaknesses.md).
 
 ## Acceptance-gate correction
 
 The original gate accepted a guard that enforced ownership only for `customer-*` and two known fixture IDs. Regression tests confirm that it passed the old fixed boundaries and incident, then failed the new randomized gate. The old live-run summary is historical evidence of inference/execution, not sufficient security validation.
 
-The unchanged generated guard passed [revalidation](evidence/review-validation-2026-10-05.json): 230 development and 230 sealed cases, 108 singleton checks, 72 actual-effect checks, 43 fixed boundary checks, and all 635 archive tasks/1,375 calls. All nine protected tools are covered. All 634 preservation cases passed; the explicit conflict remained contained.
+The unchanged generated guard passed [revalidation](../evidence/review-validation-2026-10-05.json): 230 development and 230 sealed cases, 108 singleton checks, 72 actual-effect checks, 43 fixed boundary checks, and all 635 archive tasks/1,375 calls. All nine protected tools are covered. All 634 preservation cases passed; the explicit conflict remained contained.
 
 Per-run private seeds freeze disjoint development/sealed identity pools from the synthetic benchmark. Seeds are stored outside candidate mounts in ignored files with mode 0600. Development feedback uses an aggregate allowlist; identity-conflict records, seeds and sealed diagnostics never enter model feedback. Sealed checks execute once after development selection; rejection or incomplete execution ends repair without another model call. This is randomized local verification, not independently authored final evaluation.
 
@@ -14,7 +14,7 @@ Replay batches contexts per task, uses cached decisions only for identical trust
 
 ## Historical live repair evidence
 
-The first integrated repair completed with `nvidia/nemotron-3-super-120b-a12b` on Nebius Token Factory. It consumed three Tavily guidance results and activated its first candidate after validation. Source is copied unchanged to [ownership.py](../examples/guards/ownership.py); the credential-free [run summary](evidence/live-repair-2026-10-05.json) includes provider request IDs and source/version hashes.
+The first integrated repair completed with `nvidia/nemotron-3-super-120b-a12b` on Nebius Token Factory. It consumed three Tavily guidance results and activated its first candidate after validation. Source is copied unchanged to [ownership.py](../../examples/guards/ownership.py); the credential-free [run summary](../evidence/live-repair-2026-10-05.json) includes provider request IDs and source/version hashes.
 
 - Before: two executed violations (private profile disclosure and another user's order cancellation).
 - After: both unsafe calls denied, zero executed violations/errors, legitimate cancellation completed.
@@ -54,7 +54,7 @@ The last candidate's fresh post-rejection panels also failed authorized address 
 | Reproduction/export | Frozen run source and observed effects; private-material-free patch/evidence/PR-description bundle | Relies on trusted saved validation files; does not certify provider origin |
 | Four-condition runner | Frozen discovery/evaluation conversations, matched candidate limits/temperature and shared private panels | No measured live four-condition study yet; dollar cost is unknown |
 
-The final local counts are recorded in [current evidence](evidence/local-product-2026-10-05.json). Tests cover the ID-specific bypass, development-ID memorization, batch-dependent behavior, filesystem state channels, private seeds, feedback exclusions, sealed failure stopping, manifest/coverage integrity, native provider envelopes, consent spoofing/expiry, actual adapter effects, complete discovery/repair/retest, shared budgets, origin/host/path boundaries, frozen bundles and public evidence filtering. Passing these cases does not establish universal security.
+The final local counts are recorded in [current evidence](../evidence/local-product-2026-10-05.json). Tests cover the ID-specific bypass, development-ID memorization, batch-dependent behavior, filesystem state channels, private seeds, feedback exclusions, sealed failure stopping, manifest/coverage integrity, native provider envelopes, consent spoofing/expiry, actual adapter effects, complete discovery/repair/retest, shared budgets, origin/host/path boundaries, frozen bundles and public evidence filtering. Passing these cases does not establish universal security.
 
 Before correction, an installed wheel reproduced the full archive under the original gate. The corrected wheel was separately built and installed into a fresh temporary directory: from `/tmp` with an empty environment, it loaded the manifest/archive, generated both 230-case panels and executed a stateful guard batch with isolated contexts. Full corrected-gate revalidation ran from the workspace without provider calls. Saved source, historical model response and active artifact agree on hash `c38fa12f2aeb244d1795e40f5447907de5fd8cdbd99b2728d4dd50471ed605de`. Vendored tools/data remain unchanged. Installation checks are not treated as security evidence.
 
@@ -71,7 +71,7 @@ Seeding the declared task user and also allowing these calls would violate the o
 
 The baseline archive and its expected hashes remain unchanged. All 635 original tasks stay in reported denominators. The other 634 match under the scoped guard. No task is silently removed, relabelled, or granted privileged access to manufacture a perfect score.
 
-The local [utility manifest](../patchloop/utility_manifest.json) binds the unchanged archive hash and records the conflict's disposition: execute/report it and require containment, but do not require contradictory authorized behavior. Independent human review remains pending and is explicitly recorded. Every candidate must return all expected IDs and call counts, with no added execution errors. A corrected derived case may be added with provenance; it cannot replace the original record. This is a local reference-data/contract inconsistency, not a security claim against τ-bench; no upstream issue/PR was created.
+The local [utility manifest](../../src/patchloop/environments/tau_retail/utility_manifest.json) binds the unchanged archive hash and records the conflict's disposition: execute/report it and require containment, but do not require contradictory authorized behavior. Independent human review remains pending and is explicitly recorded. Every candidate must return all expected IDs and call counts, with no added execution errors. A corrected derived case may be added with provenance; it cannot replace the original record. This is a local reference-data/contract inconsistency, not a security claim against τ-bench; no upstream issue/PR was created.
 
 ## Document findings and corrections
 
@@ -100,10 +100,10 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -e '.[dev]'
 python -m pytest -q
-python -m patchloop.demo --output artifacts/reference-comparison.json
-python -m patchloop.replay
-python -m patchloop.replay --guarded
-python -m patchloop.repair --verify examples/guards/ownership.py
+patchloop demo --output artifacts/reference-comparison.json
+patchloop replay
+patchloop replay --guarded
+patchloop repair --verify examples/guards/ownership.py
 ```
 
 Guarded replay keeps the known conflict visible while treating its manifest-defined containment as success. Offline verification adds fresh private identity panels and effect checks without provider requests or activation. The JSON demo contains synthetic results and before/after hashes.
@@ -111,14 +111,14 @@ Guarded replay keeps the known conflict visible while treating its manifest-defi
 Provider checks require separately configured environment variables:
 
 ```bash
-python -m patchloop.providers models
-python -m patchloop.providers smoke
-python -m patchloop.providers guidance
+patchloop providers models
+patchloop providers smoke
+patchloop providers guidance
 ```
 
 Set `NEBIUS_API_KEY`, an exact catalog-selected NVIDIA Nemotron `NEBIUS_MODEL`, and `TAVILY_API_KEY`. These commands send real requests; they have no automatic fallback or fabricated success. Keys are not written into reports. Tavily success requires usable results, not merely HTTP 200. Guidance is untrusted public reference text.
 
-For integrated repair, export ignored `.env` configuration with `set -a; source .env; set +a`, then run `python -m patchloop.repair --attempts 3`. The default local version is already repaired, so reruns revalidate without provider calls. To intentionally regenerate from baseline, use a fresh `--store` directory. Offline `--verify` requires no keys and does not activate a version.
+For integrated repair, export ignored `.env` configuration with `set -a; source .env; set +a`, then run `patchloop repair --attempts 3`. The default local version is already repaired, so reruns revalidate without provider calls. To intentionally regenerate from baseline, use a fresh `--store` directory. Offline `--verify` requires no keys and does not activate a version.
 
 ## Next implementation gates
 

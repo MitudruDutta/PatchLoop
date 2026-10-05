@@ -7,7 +7,7 @@ These are synthetic fixture records, never provider keys or evaluator cases.
 
 from copy import deepcopy
 
-from patchloop.policy import MUTATION_TOOLS, guard_context
+from patchloop.runtime.policy import MUTATION_TOOLS, guard_context
 
 
 def data_view(db, arguments):

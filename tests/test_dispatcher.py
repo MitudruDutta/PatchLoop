@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from patchloop.apps import tau_retail as app
-from patchloop.demo import comparison
-from patchloop.dispatcher import RetailDispatcher, state_hash
-from patchloop.policy import ORDER_TOOLS, USER_TOOLS
+from patchloop.environments import tau_retail as app
+from patchloop.evaluation.demo import comparison
+from patchloop.runtime.dispatcher import RetailDispatcher, state_hash
+from patchloop.runtime.policy import ORDER_TOOLS, USER_TOOLS
 
 
 @pytest.fixture

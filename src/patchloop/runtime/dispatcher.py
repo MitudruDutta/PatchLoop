@@ -10,9 +10,9 @@ from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
 
-from patchloop.apps import tau_retail as app
-from patchloop.context import guard_input
-from patchloop.policy import (
+from patchloop.environments import tau_retail as app
+from patchloop.runtime.context import guard_input
+from patchloop.runtime.policy import (
     AUTH_TOOLS, MUTATION_TOOLS, PRIVATE_READS, attempted_violations, changed_records,
     guard_context, unauthorized_changes,
 )
