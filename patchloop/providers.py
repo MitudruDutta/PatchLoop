@@ -7,11 +7,15 @@ or certify provider access; use the smoke commands to verify a configured key.
 import argparse
 import json
 import os
+import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 NEBIUS_BASE = "https://api.tokenfactory.nebius.com/v1"
 TAVILY_SEARCH = "https://api.tavily.com/search"
+# Live runs saw intermittent dropped connections while the provider stayed healthy.
+RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
+ATTEMPTS = 3
 
 
 class ProviderError(RuntimeError):
@@ -45,22 +49,33 @@ def request_json(url: str, key: str, payload: dict | None = None) -> dict:
     request = Request(url, data=data, headers={
         "Authorization": f"Bearer {key}", "Content-Type": "application/json",
     })
-    try:
-        with urlopen(request, timeout=60) as response:
-            body = response.read(2_000_001)
+    # Transient failures retry with 1 s then 2 s backoff; permanent ones fail at once.
+    # ponytail: fixed backoff ignores Retry-After, and a timed-out call may still be billed.
+    for attempt in range(ATTEMPTS):
+        if attempt:
+            time.sleep(2 ** (attempt - 1))
+        try:
+            with urlopen(request, timeout=60) as response:
+                body = response.read(2_000_001)
+        except HTTPError as exc:
+            # Provider error bodies can echo requests. Never include them or credentials.
+            error = ProviderError(f"Provider HTTP {exc.code}")
+            if exc.code not in RETRY_STATUS:
+                raise error from None
+            continue
+        except (URLError, TimeoutError, OSError):
+            error = ProviderError("Provider request failed or timed out")
+            continue
         if len(body) > 2_000_000:
             raise ProviderError("Provider response exceeds 2 MB limit")
-        result = json.loads(body)
+        try:
+            result = json.loads(body)
+        except (ValueError, UnicodeError):
+            raise ProviderError("Provider returned invalid JSON") from None
         if not isinstance(result, dict):
             raise ProviderError("Provider returned an invalid response object")
         return result
-    except HTTPError as exc:
-        # Provider error bodies can echo requests. Never include them or credentials.
-        raise ProviderError(f"Provider HTTP {exc.code}") from None
-    except (URLError, TimeoutError, OSError):
-        raise ProviderError("Provider request failed or timed out") from None
-    except (ValueError, UnicodeError):
-        raise ProviderError("Provider returned invalid JSON") from None
+    raise error from None
 
 
 class NebiusClient:
