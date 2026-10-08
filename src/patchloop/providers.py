@@ -44,12 +44,22 @@ def _credential(name: str) -> str:
     return value
 
 
-def nemotron_model() -> str:
-    """The NVIDIA Nemotron model named by NEBIUS_MODEL."""
-    model = _credential("NEBIUS_MODEL")
+def nemotron_model(role: str | None = None) -> str:
+    """The NVIDIA Nemotron model for a role: NEBIUS_MODEL_<ROLE> when set, else NEBIUS_MODEL.
+
+    Roles let cheap, fast models play the customer while larger ones draft rules and judge.
+    """
+    name = f"NEBIUS_MODEL_{role.upper()}" if role else "NEBIUS_MODEL"
+    model = os.environ.get(name, "").strip() or _credential("NEBIUS_MODEL")
     if not model.lower().startswith("nvidia/") or "nemotron" not in model.lower():
-        raise ProviderError("Select an NVIDIA Nemotron model from the catalog")
+        raise ProviderError(f"Select an NVIDIA Nemotron model from the catalog for {name}")
     return model
+
+
+def total_usage(records) -> dict:
+    """Sum the token counts of provider requests."""
+    keys = ("prompt_tokens", "completion_tokens", "total_tokens")
+    return {key: sum((record.get("usage") or {}).get(key, 0) for record in records) for key in keys}
 
 
 def request_json(url: str, key: str, payload: dict | None = None) -> dict:
@@ -99,14 +109,15 @@ class NebiusClient:
                 if isinstance(row, dict) and isinstance(row.get("id"), str)]
 
     def complete(self, messages: list[dict], *, model: str, max_tokens: int = 256,
-                 temperature: float = 0) -> dict:
+                 temperature: float = 0, response_format: dict | None = None) -> dict:
+        """One text completion. `response_format` asks Token Factory for JSON, optionally schema-checked."""
         if not model or not 1 <= max_tokens <= 8192:
             raise ValueError("Choose a model and a token limit between 1 and 8192")
         if not 0 <= temperature <= 1:
             raise ValueError("Temperature must be between zero and one")
         response = request_json(f"{NEBIUS_BASE}/chat/completions", self._key, {
             "model": model, "messages": messages, "max_tokens": max_tokens,
-            "temperature": temperature,
+            "temperature": temperature, **({"response_format": response_format} if response_format else {}),
         })
         try:
             choice = response["choices"][0]
@@ -169,6 +180,7 @@ class TavilyClient:
         self._key = _credential("TAVILY_API_KEY")
 
     def guidance(self, query: str = "OWASP authorization deny by default validate permissions every request") -> dict:
+        """Search the OWASP cheat sheets. Results are untrusted reference text."""
         response = request_json(TAVILY_SEARCH, self._key, {
             "query": query, "search_depth": "basic", "max_results": 3,
             "include_domains": ["cheatsheetseries.owasp.org"],
