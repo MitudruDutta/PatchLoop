@@ -1,0 +1,3361 @@
+{
+  "spec_version": 1,
+  "description": "Every PatchLoop SDK must reproduce each expected decision and reason exactly, refuse to load every invalid rule set and every invalid rule set text, and hash each rule set to the listed value. Lookups, when given, must match exactly, in order.",
+  "rulesets": {
+    "helpdesk": {
+      "schema_version": 1,
+      "name": "helpdesk",
+      "version": "conformance-1",
+      "resources": {
+        "customer": {
+          "principal": true
+        },
+        "ticket": {
+          "owner_field": "customer_id",
+          "tenant_field": "tenant_id"
+        },
+        "attachment": {
+          "parent": {
+            "resource": "ticket",
+            "field": "ticket_id"
+          }
+        },
+        "note": {
+          "owner_field": "author_id"
+        },
+        "shared_doc": {
+          "tenant_field": "tenant_id"
+        }
+      },
+      "tools": {
+        "search_articles": {
+          "access": "public",
+          "effect": "none"
+        },
+        "whoami": {
+          "access": "authenticated",
+          "effect": "none"
+        },
+        "get_customer_profile": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "customer_id",
+              "resource": "customer"
+            }
+          ]
+        },
+        "get_ticket": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "ticket_id",
+              "resource": "ticket"
+            }
+          ]
+        },
+        "get_attachment": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "attachment_id",
+              "resource": "attachment"
+            }
+          ]
+        },
+        "get_note": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "note_id",
+              "resource": "note"
+            }
+          ]
+        },
+        "read_shared_doc": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "doc_id",
+              "resource": "shared_doc"
+            }
+          ]
+        },
+        "close_ticket": {
+          "access": "scoped",
+          "effect": "state_write",
+          "consent": true,
+          "resources": [
+            {
+              "argument": "ticket_id",
+              "resource": "ticket"
+            }
+          ]
+        },
+        "close_tickets": {
+          "access": "scoped",
+          "effect": "state_write",
+          "consent": true,
+          "resources": [
+            {
+              "argument": "ticket_ids",
+              "resource": "ticket",
+              "cardinality": "many"
+            }
+          ]
+        },
+        "get_ticket_nested": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "/ref/ticket_id",
+              "resource": "ticket"
+            }
+          ]
+        },
+        "get_ticket_escaped": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "/a~1b~0c",
+              "resource": "ticket"
+            }
+          ]
+        },
+        "get_first_ticket": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "/ids/0",
+              "resource": "ticket"
+            }
+          ]
+        }
+      }
+    },
+    "deep": {
+      "schema_version": 1,
+      "name": "deep",
+      "version": "conformance-1",
+      "resources": {
+        "d0": {
+          "parent": {
+            "resource": "d1",
+            "field": "up"
+          }
+        },
+        "d1": {
+          "parent": {
+            "resource": "d2",
+            "field": "up"
+          }
+        },
+        "d2": {
+          "parent": {
+            "resource": "d3",
+            "field": "up"
+          }
+        },
+        "d3": {
+          "parent": {
+            "resource": "d4",
+            "field": "up"
+          }
+        },
+        "d4": {
+          "owner_field": "owner"
+        }
+      },
+      "tools": {
+        "read_d0": {
+          "access": "scoped",
+          "effect": "none",
+          "resources": [
+            {
+              "argument": "id",
+              "resource": "d0"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "ruleset_sha256": {
+    "helpdesk": "2bfefb58914adcb94ddb345e3341fb15ab875ff305cb747794418838546ee692",
+    "deep": "bf670184944db5c4455c8be0ba1488ba6976bd25e14baeaad2300ff66764a110"
+  },
+  "facts": {
+    "helpdesk": {
+      "records": {
+        "ticket": {
+          "T1": {
+            "customer_id": "c1",
+            "tenant_id": "t1",
+            "subject": "Login fails"
+          },
+          "T2": {
+            "customer_id": "c2",
+            "tenant_id": "t1"
+          },
+          "T3": {
+            "customer_id": "c1",
+            "tenant_id": "t2"
+          },
+          "T4": {
+            "tenant_id": "t1"
+          },
+          "T5": {
+            "customer_id": "c1"
+          },
+          "T6": {
+            "customer_id": "c1",
+            "tenant_id": "t1"
+          }
+        },
+        "attachment": {
+          "A1": {
+            "ticket_id": "T1"
+          },
+          "A2": {
+            "ticket_id": "T2"
+          },
+          "A3": {},
+          "A4": {
+            "ticket_id": "T-NONE"
+          },
+          "A5": {
+            "ticket_id": {
+              "id": "T1"
+            }
+          },
+          "A6": {
+            "ticket_id": "T-DOWN"
+          }
+        },
+        "note": {
+          "N1": {
+            "author_id": 7
+          },
+          "N2": {
+            "author_id": "c1"
+          }
+        },
+        "shared_doc": {
+          "D1": {
+            "tenant_id": "t1"
+          }
+        }
+      },
+      "unavailable": [
+        [
+          "ticket",
+          "T-DOWN"
+        ]
+      ]
+    },
+    "deep": {
+      "records": {
+        "d0": {
+          "x": {
+            "up": "x"
+          }
+        },
+        "d1": {
+          "x": {
+            "up": "x"
+          }
+        },
+        "d2": {
+          "x": {
+            "up": "x"
+          }
+        },
+        "d3": {
+          "x": {
+            "up": "x"
+          }
+        },
+        "d4": {
+          "x": {
+            "owner": "c1"
+          }
+        }
+      },
+      "unavailable": []
+    }
+  },
+  "cases": [
+    {
+      "id": "public-without-login",
+      "ruleset": "helpdesk",
+      "tool": "search_articles",
+      "arguments": {
+        "query": "reset password"
+      },
+      "principal": null,
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "public",
+        "lookups": []
+      }
+    },
+    {
+      "id": "unreviewed-tool",
+      "ruleset": "helpdesk",
+      "tool": "delete_everything",
+      "arguments": {},
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "unreviewed_tool"
+      }
+    },
+    {
+      "id": "authenticated-without-login",
+      "ruleset": "helpdesk",
+      "tool": "whoami",
+      "arguments": {},
+      "principal": null,
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "authentication_required"
+      }
+    },
+    {
+      "id": "authenticated-with-login",
+      "ruleset": "helpdesk",
+      "tool": "whoami",
+      "arguments": {},
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "scoped-without-login",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": null,
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "authentication_required"
+      }
+    },
+    {
+      "id": "owner-matches",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized",
+        "lookups": [
+          {
+            "resource": "ticket",
+            "id": "T1",
+            "status": "found",
+            "owner": "c1",
+            "tenant": "t1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "other-owner",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T2"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
+    },
+    {
+      "id": "other-tenant-same-subject",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T3"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "wrong_tenant"
+      },
+      "note": "Tenant is checked before owner."
+    },
+    {
+      "id": "principal-tenant-unknown",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": null
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "tenant_unknown"
+      }
+    },
+    {
+      "id": "record-tenant-unknown",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T5"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "tenant_unknown"
+      }
+    },
+    {
+      "id": "record-owner-unknown",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T4"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "owner_unknown",
+        "lookups": [
+          {
+            "resource": "ticket",
+            "id": "T4",
+            "status": "found",
+            "owner": null,
+            "tenant": "t1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "argument-absent",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {},
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      }
+    },
+    {
+      "id": "argument-null",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": null
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      }
+    },
+    {
+      "id": "argument-object",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": {
+          "id": "T1"
+        }
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      }
+    },
+    {
+      "id": "integer-identifier-accepted",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": 42
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "resource_missing",
+        "lookups": [
+          {
+            "resource": "ticket",
+            "id": 42,
+            "status": "missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "resource-missing-denied",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T-NONE"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "resource_missing"
+      }
+    },
+    {
+      "id": "facts-unavailable",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": "T-DOWN"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "facts_unavailable",
+        "lookups": [
+          {
+            "resource": "ticket",
+            "id": "T-DOWN",
+            "status": "unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "parent-owner-matches",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized",
+        "lookups": [
+          {
+            "resource": "attachment",
+            "id": "A1",
+            "status": "found",
+            "parent": "T1"
+          },
+          {
+            "resource": "ticket",
+            "id": "T1",
+            "status": "found",
+            "owner": "c1",
+            "tenant": "t1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "parent-other-owner",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A2"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
+    },
+    {
+      "id": "parent-field-absent",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A3"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "broken_parent"
+      }
+    },
+    {
+      "id": "parent-record-missing",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A4"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "broken_parent"
+      }
+    },
+    {
+      "id": "child-record-missing",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A-NONE"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "resource_missing"
+      }
+    },
+    {
+      "id": "many-all-owned",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": [
+          "T1",
+          "T6"
+        ]
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "many-one-foreign",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": [
+          "T1",
+          "T2"
+        ]
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
+    },
+    {
+      "id": "many-not-array",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      }
+    },
+    {
+      "id": "many-empty",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": []
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "many-bad-item",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": [
+          "T1",
+          3.5
+        ]
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      }
+    },
+    {
+      "id": "principal-argument-matches",
+      "ruleset": "helpdesk",
+      "tool": "get_customer_profile",
+      "arguments": {
+        "customer_id": "c1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized",
+        "lookups": []
+      }
+    },
+    {
+      "id": "principal-argument-other",
+      "ruleset": "helpdesk",
+      "tool": "get_customer_profile",
+      "arguments": {
+        "customer_id": "c2"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_principal"
+      }
+    },
+    {
+      "id": "consent-absent",
+      "ruleset": "helpdesk",
+      "tool": "close_ticket",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "consent_required"
+      }
+    },
+    {
+      "id": "consent-present",
+      "ruleset": "helpdesk",
+      "tool": "close_ticket",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "ownership-before-consent",
+      "ruleset": "helpdesk",
+      "tool": "close_ticket",
+      "arguments": {
+        "ticket_id": "T2"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      },
+      "note": "Ownership is checked before consent."
+    },
+    {
+      "id": "strict-equality",
+      "ruleset": "helpdesk",
+      "tool": "get_note",
+      "arguments": {
+        "note_id": "N1"
+      },
+      "principal": {
+        "subject": "7",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      },
+      "note": "Integer 7 is not equal to string \"7\"."
+    },
+    {
+      "id": "owner-only-resource",
+      "ruleset": "helpdesk",
+      "tool": "get_note",
+      "arguments": {
+        "note_id": "N2"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "tenant-only-resource",
+      "ruleset": "helpdesk",
+      "tool": "read_shared_doc",
+      "arguments": {
+        "doc_id": "D1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "tenant-only-other-tenant",
+      "ruleset": "helpdesk",
+      "tool": "read_shared_doc",
+      "arguments": {
+        "doc_id": "D1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t2"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "wrong_tenant"
+      }
+    },
+    {
+      "id": "four-parent-links",
+      "ruleset": "deep",
+      "tool": "read_d0",
+      "arguments": {
+        "id": "x"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "integer-subject-integer-owner",
+      "ruleset": "helpdesk",
+      "tool": "get_note",
+      "arguments": {
+        "note_id": "N1"
+      },
+      "principal": {
+        "subject": 7,
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "parent-field-not-identifier",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A5"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "broken_parent"
+      }
+    },
+    {
+      "id": "parent-lookup-unavailable",
+      "ruleset": "helpdesk",
+      "tool": "get_attachment",
+      "arguments": {
+        "attachment_id": "A6"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "facts_unavailable",
+        "lookups": [
+          {
+            "resource": "attachment",
+            "id": "A6",
+            "status": "found",
+            "parent": "T-DOWN"
+          },
+          {
+            "resource": "ticket",
+            "id": "T-DOWN",
+            "status": "unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "many-boolean-item",
+      "ruleset": "helpdesk",
+      "tool": "close_tickets",
+      "arguments": {
+        "ticket_ids": [
+          "T1",
+          true
+        ]
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      },
+      "note": "Booleans are not integers."
+    },
+    {
+      "id": "unsafe-integer",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket",
+      "arguments": {
+        "ticket_id": 9007199254740992
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      },
+      "note": "2^53 is outside the exact integer range of every SDK."
+    },
+    {
+      "id": "pointer-nested-owned",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket_nested",
+      "arguments": {
+        "ref": {
+          "ticket_id": "T1"
+        }
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      }
+    },
+    {
+      "id": "pointer-nested-foreign",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket_nested",
+      "arguments": {
+        "ref": {
+          "ticket_id": "T2"
+        }
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
+    },
+    {
+      "id": "pointer-through-a-string",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket_nested",
+      "arguments": {
+        "ref": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      },
+      "note": "A pointer that does not resolve counts as absent."
+    },
+    {
+      "id": "pointer-ignores-top-level-key",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket_nested",
+      "arguments": {
+        "ticket_id": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      }
+    },
+    {
+      "id": "pointer-escapes",
+      "ruleset": "helpdesk",
+      "tool": "get_ticket_escaped",
+      "arguments": {
+        "a/b~c": "T1"
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "~1 is / and ~0 is ~."
+    },
+    {
+      "id": "pointer-array-index",
+      "ruleset": "helpdesk",
+      "tool": "get_first_ticket",
+      "arguments": {
+        "ids": [
+          "T2",
+          "T1"
+        ]
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
+    },
+    {
+      "id": "pointer-array-index-out-of-range",
+      "ruleset": "helpdesk",
+      "tool": "get_first_ticket",
+      "arguments": {
+        "ids": []
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      }
+    },
+    {
+      "id": "pointer-index-token-on-object",
+      "ruleset": "helpdesk",
+      "tool": "get_first_ticket",
+      "arguments": {
+        "ids": {
+          "0": "T1"
+        }
+      },
+      "principal": {
+        "subject": "c1",
+        "tenant": "t1"
+      },
+      "consent": false,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "On an object, every token is a key, including \"0\"."
+    }
+  ],
+  "invalid_rulesets": [
+    {
+      "id": "unknown-top-level-key",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        },
+        "extra": true
+      },
+      "why": "Only schema keys are allowed"
+    },
+    {
+      "id": "wrong-schema-version",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "schema_version must be 1"
+    },
+    {
+      "id": "empty-version",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "version must be non-empty"
+    },
+    {
+      "id": "resource-two-forms",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true,
+            "owner_field": "x"
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Exactly one form"
+    },
+    {
+      "id": "resource-no-form",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {},
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Exactly one form"
+    },
+    {
+      "id": "parent-undefined",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "nothing",
+              "field": "x"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Parent must be defined"
+    },
+    {
+      "id": "binding-undefined",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "nothing"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Binding must name a defined resource"
+    },
+    {
+      "id": "parent-cycle",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "deep",
+        "version": "conformance-1",
+        "resources": {
+          "d0": {
+            "parent": {
+              "resource": "d1",
+              "field": "up"
+            }
+          },
+          "d1": {
+            "parent": {
+              "resource": "d2",
+              "field": "up"
+            }
+          },
+          "d2": {
+            "parent": {
+              "resource": "d3",
+              "field": "up"
+            }
+          },
+          "d3": {
+            "parent": {
+              "resource": "d4",
+              "field": "up"
+            }
+          },
+          "d4": {
+            "parent": {
+              "resource": "d0",
+              "field": "up"
+            }
+          }
+        },
+        "tools": {
+          "read_d0": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "id",
+                "resource": "d0"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Parent links must not revisit a resource"
+    },
+    {
+      "id": "parent-chain-five-links",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "deep",
+        "version": "conformance-1",
+        "resources": {
+          "d0": {
+            "parent": {
+              "resource": "d1",
+              "field": "up"
+            }
+          },
+          "d1": {
+            "parent": {
+              "resource": "d2",
+              "field": "up"
+            }
+          },
+          "d2": {
+            "parent": {
+              "resource": "d3",
+              "field": "up"
+            }
+          },
+          "d3": {
+            "parent": {
+              "resource": "d4",
+              "field": "up"
+            }
+          },
+          "d4": {
+            "parent": {
+              "resource": "d5",
+              "field": "up"
+            }
+          },
+          "d5": {
+            "owner_field": "owner"
+          }
+        },
+        "tools": {
+          "read_d0": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "id",
+                "resource": "d0"
+              }
+            ]
+          }
+        }
+      },
+      "why": "At most four parent links"
+    },
+    {
+      "id": "scoped-without-bindings",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none"
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Scoped tools need bindings"
+    },
+    {
+      "id": "public-with-bindings",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "q",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Only scoped tools have bindings"
+    },
+    {
+      "id": "bad-access",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "admin",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "access must be public, authenticated or scoped"
+    },
+    {
+      "id": "bad-effect",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "delete"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "effect value"
+    },
+    {
+      "id": "bad-cardinality",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket",
+                "cardinality": "all"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "cardinality value"
+    },
+    {
+      "id": "consent-not-boolean",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": "yes",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "consent must be boolean"
+    },
+    {
+      "id": "unknown-tool-key",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none",
+            "role": "admin"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Only schema keys are allowed"
+    },
+    {
+      "id": "public-with-consent",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "state_write",
+            "consent": true
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          },
+          "get_ticket_nested": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ref/ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_ticket_escaped": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/a~1b~0c",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_first_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ids/0",
+                "resource": "ticket"
+              }
+            ]
+          }
+        }
+      },
+      "why": "A public tool is allowed before consent is checked"
+    },
+    {
+      "id": "missing-resource-key-removed",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ],
+            "missing_resource": "allow"
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          },
+          "get_ticket_nested": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ref/ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_ticket_escaped": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/a~1b~0c",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_first_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ids/0",
+                "resource": "ticket"
+              }
+            ]
+          }
+        }
+      },
+      "why": "missing_resource is not part of the rule set format"
+    },
+    {
+      "id": "bad-pointer-escape",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          },
+          "get_ticket_nested": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ref/~2",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_ticket_escaped": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/a~1b~0c",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_first_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ids/0",
+                "resource": "ticket"
+              }
+            ]
+          }
+        }
+      },
+      "why": "~ must be followed by 0 or 1"
+    }
+  ],
+  "invalid_ruleset_texts": [
+    {
+      "id": "duplicate-tool-key",
+      "text": "{\"schema_version\":1,\"name\":\"d\",\"version\":\"1\",\"resources\":{\"ticket\":{\"owner_field\":\"owner\"}},\"tools\":{\"close\":{\"access\":\"scoped\",\"effect\":\"state_write\",\"consent\":true,\"resources\":[{\"argument\":\"id\",\"resource\":\"ticket\"}],\"consent\":false}}}",
+      "why": "A reviewer reads consent true; a parser keeps consent false"
+    },
+    {
+      "id": "duplicate-top-level-key",
+      "text": "{\"schema_version\":1,\"name\":\"d\",\"version\":\"1\",\"resources\":{\"ticket\":{\"owner_field\":\"owner\"}},\"tools\":{},\"tools\":{\"x\":{\"access\":\"public\",\"effect\":\"none\"}}}",
+      "why": "Duplicate keys are refused at every level"
+    }
+  ]
+}

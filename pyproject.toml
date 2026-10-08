@@ -5,14 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "patchloop"
 version = "0.1.0"
-description = "Find prompt-only policy rules in tool-using agents and repair them with tested guard code."
+description = "Authorization rules at the tool boundary of AI agents: record, enforce and report every tool call."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+# Framework adapters. Lower bounds are the versions the adapter tests run against.
+fastmcp = ["fastmcp>=3.1"]
+langchain = ["langchain>=1.2", "langgraph>=1.1"]
+strands = ["strands-agents>=1.26"]
+dev = ["pytest>=8", "jsonschema>=4", "patchloop[fastmcp,langchain,strands]"]
 
 [project.scripts]
 patchloop = "patchloop.cli:main"
@@ -20,10 +24,6 @@ patchloop = "patchloop.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["patchloop*"]
-
-[tool.setuptools.package-data]
-"patchloop.dashboard" = ["web/*.html", "web/*.css", "web/*.js"]
-"patchloop.environments.tau_retail" = ["*.json", "*.md", "LICENSE.sierra", "data/*.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

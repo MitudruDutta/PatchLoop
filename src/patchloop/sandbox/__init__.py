@@ -43,13 +43,10 @@ def validate_source(source: str):
 class SandboxGuard:
     source: str
     timeout: float = 5.0
-    interface: str = "fixed"
     backend: str = field(default_factory=lambda: os.getenv("PATCHLOOP_SANDBOX", "bwrap"))
 
     def __post_init__(self):
         validate_source(self.source)
-        if self.interface not in {"fixed", "adapter"}:
-            raise ValueError("Unknown guard interface")
         if self.backend not in {"bwrap", "docker"}:
             raise ValueError("Choose bwrap or docker isolation")
         if not 0 < self.timeout <= 30:

@@ -50,7 +50,7 @@ def request_json(url: str, key: str, payload: dict | None = None) -> dict:
         "Authorization": f"Bearer {key}", "Content-Type": "application/json",
     })
     # Transient failures retry with 1 s then 2 s backoff; permanent ones fail at once.
-    # ponytail: fixed backoff ignores Retry-After, and a timed-out call may still be billed.
+    # Note: fixed backoff ignores Retry-After, and a timed-out call may still be billed.
     for attempt in range(ATTEMPTS):
         if attempt:
             time.sleep(2 ** (attempt - 1))
