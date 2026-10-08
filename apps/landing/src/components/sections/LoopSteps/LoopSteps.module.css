@@ -1,0 +1,323 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 96px var(--rail-gutter);
+  overflow: clip;
+  color: var(--ink);
+}
+
+.inner {
+  width: var(--rail);
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 56px;
+}
+
+.heading {
+  width: 700px;
+  max-width: 100%;
+}
+
+.stand {
+  flex-shrink: 0;
+  width: 400px;
+  color: rgba(var(--ink-rgb), 0.72);
+}
+
+.columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 64px;
+  padding-top: 62px;
+}
+
+/* Rail */
+
+.rail {
+  position: relative;
+  flex-shrink: 0;
+  width: 520px;
+}
+
+.divider {
+  width: calc(100% - 37px);
+  height: 1px;
+  margin: 28px 0 28px 37px;
+  border-top: 1px dashed rgba(var(--ink-rgb), 0.24);
+}
+
+.step {
+  position: relative;
+}
+
+/* Fills downward while the step's timer runs. */
+.tick {
+  position: absolute;
+  top: 26px;
+  left: 6.5px;
+  width: 2px;
+  height: 72px;
+  background: var(--field);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+.counting .tick {
+  animation: rail-fill var(--dwell, 5.5s) linear forwards;
+}
+
+@keyframes rail-fill {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.stepHeading {
+  margin: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 6px;
+  border-radius: 2px;
+}
+
+.marker {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-top: 5px;
+  border: 1px solid rgba(var(--ink-rgb), 0.4);
+  border-radius: 3px;
+  background: var(--chip-empty);
+  transition:
+    background 0.26s,
+    border-color 0.26s;
+}
+
+.trigger:hover .marker {
+  border-color: rgba(var(--ink-rgb), 0.72);
+}
+
+.stepActive .marker {
+  border-color: transparent;
+  background: var(--field);
+}
+
+.stepTitle {
+  color: rgba(var(--ink-rgb), 0.66);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 26px;
+  letter-spacing: -0.012em;
+  transition: color 0.26s;
+}
+
+.trigger:hover .stepTitle,
+.stepActive .stepTitle {
+  color: var(--ink);
+}
+
+.bodyTrack {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-left: 37px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.3s,
+    opacity 0.22s,
+    visibility 0s 0.3s;
+}
+
+.stepActive .bodyTrack {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.3s,
+    opacity 0.22s,
+    visibility 0s;
+}
+
+.stepBody {
+  width: min(470px, 100%);
+  margin: 0;
+  padding-top: 0;
+  overflow: hidden;
+  color: rgba(var(--ink-rgb), 0.74);
+  font-size: 15.5px;
+  line-height: 24px;
+  transition: padding-top 0.3s;
+}
+
+.stepActive .stepBody {
+  padding-top: 10px;
+}
+
+/* Visual */
+
+.visualCell {
+  position: relative;
+  display: grid;
+  /* minmax(0, …): a mock's widest line must not widen the column. */
+  grid-template-columns: minmax(0, 1fr);
+  flex: 1;
+  min-width: 0;
+  min-height: 560px;
+  padding: 32px;
+  border-radius: var(--radius-frame);
+  background-color: rgba(120, 156, 65, 0.1);
+  background-image: radial-gradient(rgba(var(--ink-rgb), 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.visual {
+  grid-area: 1 / 1;
+  align-self: center;
+  width: 100%;
+  min-width: 0;
+  max-width: 540px;
+  margin-inline: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition:
+    opacity 0.3s,
+    transform 0.42s var(--ease-arrive),
+    visibility 0s 0.3s;
+}
+
+.visualActive {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.42s 0.08s,
+    transform 0.42s var(--ease-arrive) 0.08s,
+    visibility 0s;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Without scripting no step can be opened, so every step is open. */
+@media (scripting: none) {
+  .bodyTrack {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .stepBody {
+    padding-top: 10px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .rail {
+    width: 420px;
+  }
+
+  .columns {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .section {
+    display: block;
+    min-height: 0;
+    padding-block: 104px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .heading {
+    width: auto;
+    max-width: 700px;
+  }
+
+  .stand {
+    flex-shrink: 1;
+    width: auto;
+    max-width: 400px;
+  }
+
+  .columns {
+    flex-direction: column;
+    gap: 36px;
+    padding-top: 40px;
+  }
+
+  .rail {
+    order: 2;
+    width: 100%;
+  }
+
+  .visualCell {
+    order: 1;
+    width: 100%;
+    min-height: 0;
+    padding: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-block: 80px;
+  }
+
+  .visualCell {
+    padding: 14px;
+  }
+
+  .stepTitle {
+    font-size: 18.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker,
+  .stepTitle,
+  .bodyTrack,
+  .stepBody,
+  .visual,
+  .visualActive {
+    transition: none;
+  }
+
+  .tick {
+    display: none;
+  }
+}

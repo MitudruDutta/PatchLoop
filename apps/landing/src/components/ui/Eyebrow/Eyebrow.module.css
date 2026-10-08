@@ -1,0 +1,56 @@
+.eyebrow {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
+  padding: 6px 14px 6px 12px;
+  border: 1px solid rgba(var(--cream-rgb), 0.14);
+  border-radius: var(--radius);
+  background: rgba(var(--cream-rgb), 0.08);
+  color: rgba(var(--cream-rgb), 0.92);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+/* The accent mark: the same signal as the call on the loop below. */
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  box-shadow: 0 0 0 3px rgba(var(--signal-rgb), 0.16);
+}
+
+.eyebrow::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 42%;
+  background: linear-gradient(100deg, transparent 0%, rgba(var(--cream-rgb), 0.3) 50%, transparent 100%);
+  transform: translateX(-120%);
+  animation: sheen 7s ease-in-out 1.4s infinite;
+}
+
+@keyframes sheen {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  18%,
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow::after {
+    opacity: 0;
+    animation: none;
+  }
+}

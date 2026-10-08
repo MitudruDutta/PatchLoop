@@ -1,0 +1,50 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100svh;
+  padding: 48px var(--rail-gutter);
+  background: var(--field);
+  color: rgba(var(--cream-rgb), 0.7);
+  text-align: center;
+}
+
+.brand {
+  margin-bottom: 40px;
+  color: var(--cream);
+  text-decoration: none;
+}
+
+.title {
+  margin: 0;
+  color: var(--cream);
+  font-size: clamp(32px, 6vw, 50px);
+  font-weight: 300;
+  line-height: 1.16;
+  letter-spacing: -0.024em;
+}
+
+.text {
+  margin: 0;
+  font-size: 17px;
+  line-height: 27px;
+}
+
+.home {
+  margin-top: 20px;
+  padding: 15px 28px;
+  border-radius: var(--radius);
+  background: var(--cream);
+  color: var(--field);
+  font-size: 15.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.brand:focus-visible,
+.home:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 3px;
+}

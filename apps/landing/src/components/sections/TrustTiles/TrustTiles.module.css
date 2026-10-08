@@ -1,0 +1,300 @@
+.section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 96px var(--rail-gutter);
+}
+
+.inner {
+  width: var(--rail);
+}
+
+.header {
+  padding-bottom: 64px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.row {
+  display: flex;
+  gap: 24px;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  height: 460px;
+  padding: 28px;
+  overflow: hidden;
+  border-radius: var(--radius-tile);
+  background: var(--plate);
+}
+
+.title {
+  color: var(--ink);
+}
+
+.text {
+  margin-top: 6px;
+  color: rgba(var(--ink-rgb), 0.72);
+}
+
+.art {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  margin-top: 22px;
+}
+
+.artInner {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Wide tiles put the art above the text. */
+.wide .head {
+  order: 2;
+  padding-top: 24px;
+}
+
+.wide .art {
+  order: 1;
+  margin-top: 0;
+}
+
+/* Identity */
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+}
+
+.identityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(var(--ink-rgb), 0.08);
+  border-radius: 12px;
+  background: var(--white);
+  box-shadow: 0 10px 24px -18px rgba(var(--ink-rgb), 0.5);
+}
+
+.identitySource {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: rgba(var(--ink-rgb), 0.66);
+}
+
+.identitySource code {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+.identityChip {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+/* Sandbox */
+
+.sandbox {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.ring {
+  grid-area: 1 / 1;
+  border: 1px solid rgba(var(--ink-rgb), 0.2);
+  border-radius: 28px;
+}
+
+.ringOuter {
+  width: min(250px, 100%);
+  aspect-ratio: 1;
+  border-style: dashed;
+  animation: breathe 12s ease-in-out infinite;
+}
+
+.ringMiddle {
+  width: min(178px, 72%);
+  aspect-ratio: 1;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.34);
+  animation: breathe 12s ease-in-out -4s infinite;
+}
+
+.ringInner {
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-color: transparent;
+  border-radius: 16px;
+  background: var(--field);
+  color: var(--signal);
+  font-size: 13.5px;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+.sandboxChip {
+  position: absolute;
+  top: 8%;
+  right: 0;
+}
+
+.sandboxChipLow {
+  top: auto;
+  right: auto;
+  bottom: 8%;
+  left: 0;
+}
+
+/* Trace */
+
+.trace {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+.traceChip {
+  align-self: flex-end;
+  margin-top: -6px;
+  margin-right: -6px;
+  max-width: 100%;
+  white-space: normal;
+}
+
+/* Runner */
+
+.runner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 100%;
+}
+
+.place {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: 190px;
+}
+
+.placeBox {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1.1;
+  border: 1px dashed rgba(var(--ink-rgb), 0.3);
+  border-radius: 20px;
+}
+
+.placeBox code {
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: var(--field);
+  color: var(--signal);
+  font-size: 12.5px;
+}
+
+@media (max-width: 1180px) {
+  .tile {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .section {
+    min-height: 0;
+    padding-block: 104px;
+  }
+
+  .header {
+    padding-bottom: 48px;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .tile {
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: 420px;
+  }
+
+  .art {
+    min-height: 260px;
+  }
+
+  .artInner {
+    width: min(420px, 100%);
+    margin-inline: auto;
+    flex: none;
+  }
+
+  .wide .head {
+    order: 0;
+    padding-top: 0;
+  }
+
+  .wide .art {
+    order: 1;
+    margin-top: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-block: 80px;
+  }
+
+  .runner {
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ringOuter,
+  .ringMiddle {
+    animation: none;
+  }
+}

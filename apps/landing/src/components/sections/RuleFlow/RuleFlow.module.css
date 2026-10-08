@@ -1,0 +1,278 @@
+.section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 112px var(--rail-gutter);
+}
+
+.inner {
+  width: var(--rail);
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  margin-top: 72px;
+  padding: 84px 32px 56px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  border-radius: var(--radius-frame);
+  background: var(--white);
+  box-shadow: var(--shadow-frame);
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(var(--ink-rgb), 0.13) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(104% 116%, #000 46%, rgba(0, 0, 0, 0.46) 82%, transparent 100%);
+}
+
+.bloom {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 860px;
+  height: 440px;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(var(--ink-rgb), 0.07) 0%, rgba(var(--ink-rgb), 0.024) 44%, transparent 74%);
+  transform: translate(-50%, -50%);
+}
+
+.panel {
+  position: relative;
+  max-width: 100%;
+  border-radius: var(--radius-node);
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  animation: swap 0.42s var(--ease-arrive) both;
+}
+
+@keyframes swap {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Nodes */
+
+.node {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+  width: 280px;
+  min-height: 84px;
+  padding: 14px 18px;
+  border: 1px solid rgba(var(--ink-rgb), 0.14);
+  border-radius: var(--radius-node);
+  background: var(--white);
+  box-shadow: 0 14px 30px -22px rgba(var(--ink-rgb), 0.5);
+  transition:
+    transform 0.24s var(--ease-arrive),
+    border-color 0.2s ease,
+    box-shadow 0.24s ease;
+}
+
+.node:hover {
+  border-color: rgba(47, 107, 63, 0.5);
+  box-shadow: 0 26px 44px -28px rgba(var(--ink-rgb), 0.5);
+  transform: translateY(-2px);
+}
+
+.nodeIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(var(--ink-rgb), 0.06);
+  color: var(--field);
+}
+
+.nodeDeny .nodeIcon {
+  background: rgba(171, 63, 43, 0.1);
+  color: var(--deny);
+}
+
+.nodeCopy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nodeLabel {
+  color: rgba(var(--ink-rgb), 0.66);
+}
+
+.nodeDeny .nodeLabel {
+  color: var(--deny);
+}
+
+.nodeText {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 19px;
+  text-wrap: balance;
+}
+
+.code {
+  font-size: 12.5px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Wires */
+
+.wire {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.wireH {
+  width: 96px;
+  height: 84px;
+}
+
+.forkH {
+  width: 96px;
+  height: 208px;
+}
+
+.wireV {
+  display: none;
+  width: 1px;
+  height: 36px;
+  background: rgba(var(--ink-rgb), 0.3);
+}
+
+.line {
+  stroke: rgba(var(--ink-rgb), 0.3);
+  stroke-width: 1;
+}
+
+.pulse {
+  fill: var(--link);
+}
+
+.thenColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 40px;
+}
+
+.thenItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.thenGap {
+  display: none;
+  width: 1px;
+  height: 36px;
+  background: rgba(var(--ink-rgb), 0.3);
+}
+
+@media (max-width: 1180px) {
+  .node {
+    width: 240px;
+  }
+
+  .wireH,
+  .forkH {
+    width: 64px;
+  }
+}
+
+/* Column layout with vertical wires. */
+@media (max-width: 1024px) {
+  .section {
+    min-height: 0;
+    padding-block: 104px;
+  }
+
+  .frame {
+    min-height: 0;
+    margin-top: 48px;
+    padding: 76px 16px 36px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wireH,
+  .forkH {
+    display: none;
+  }
+
+  .wireV,
+  .thenGap {
+    display: block;
+  }
+
+  .node {
+    width: min(320px, 100%);
+  }
+
+  .thenColumn {
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+
+  .thenItem {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-block: 80px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row {
+    animation: none;
+  }
+
+  .pulse {
+    display: none;
+  }
+
+  .node {
+    transition: none;
+  }
+
+  .node:hover {
+    transform: none;
+  }
+}

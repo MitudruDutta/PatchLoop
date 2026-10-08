@@ -1,0 +1,135 @@
+.field {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  display: block;
+  width: var(--art-w, clamp(1100px, 100vw, 1680px));
+  aspect-ratio: 1440 / 620;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.wake {
+  stroke: var(--signal);
+  stroke-width: 1.5;
+}
+
+.stationDot {
+  fill: var(--field);
+  stroke: rgba(var(--cream-rgb), 0.6);
+  stroke-width: 1.25;
+}
+
+.stationLabel {
+  fill: rgba(var(--cream-rgb), 0.52);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Each station answers the call as it arrives, holds for a moment, then settles. */
+.stationDot,
+.stationLabel,
+.pulse {
+  animation-duration: var(--period);
+  animation-delay: var(--arrival);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.stationDot {
+  animation-name: dot-answer;
+}
+
+.stationLabel {
+  animation-name: label-answer;
+}
+
+@keyframes dot-answer {
+  0%,
+  4% {
+    fill: var(--signal);
+    stroke: var(--signal);
+  }
+
+  22%,
+  100% {
+    fill: var(--field);
+    stroke: rgba(var(--cream-rgb), 0.6);
+  }
+}
+
+@keyframes label-answer {
+  0%,
+  4% {
+    fill: var(--cream);
+  }
+
+  22%,
+  100% {
+    fill: rgba(var(--cream-rgb), 0.52);
+  }
+}
+
+.pulse {
+  fill: none;
+  stroke: var(--signal);
+  stroke-width: 1.25;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-name: pulse;
+  animation-timing-function: ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+
+  9% {
+    opacity: 0;
+    transform: scale(4.6);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(4.6);
+  }
+}
+
+.callStill {
+  display: none;
+}
+
+/* The artwork never narrows below 1100px, so the outer stations leave the screen first. */
+@media (max-width: 900px) {
+  .stations > g:first-child,
+  .stations > g:last-child {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .stations {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call {
+    display: none;
+  }
+
+  .callStill {
+    display: inline;
+  }
+
+  .stationDot,
+  .stationLabel,
+  .pulse {
+    animation: none;
+  }
+}

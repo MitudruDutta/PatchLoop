@@ -1,0 +1,35 @@
+.arm {
+  position: absolute;
+  width: var(--bracket-arm, 14px);
+  height: var(--bracket-arm, 14px);
+  border: 0 solid var(--bracket-color, var(--edge));
+  pointer-events: none;
+}
+
+.tl {
+  top: 0;
+  left: 0;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.tr {
+  top: 0;
+  right: 0;
+  border-top-width: 1px;
+  border-right-width: 1px;
+}
+
+.bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 1px;
+  border-left-width: 1px;
+}
+
+.br {
+  right: 0;
+  bottom: 0;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}

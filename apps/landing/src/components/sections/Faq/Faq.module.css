@@ -1,0 +1,190 @@
+.section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 120px var(--rail-gutter);
+  overflow: hidden;
+}
+
+.inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 120px;
+}
+
+.heading {
+  flex-shrink: 0;
+  width: 440px;
+  color: var(--ink);
+}
+
+.list {
+  flex: 1 1 760px;
+  min-width: 0;
+  border-top: 1px solid rgba(var(--ink-rgb), 0.14);
+}
+
+.row {
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.14);
+}
+
+.questionHeading {
+  margin: 0;
+  font: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  padding: 28px 8px 28px 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+  border-radius: 2px;
+}
+
+.question {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.mark {
+  flex-shrink: 0;
+  color: rgba(var(--ink-rgb), 0.58);
+}
+
+.markStem {
+  transform-origin: 7px 7px;
+  transition: transform 0.24s var(--ease-arrive);
+}
+
+.isOpen .markStem {
+  transform: scaleY(0);
+}
+
+.body {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.32s var(--ease-arrive),
+    visibility 0s 0.32s;
+}
+
+.isOpen .body {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.32s var(--ease-arrive),
+    visibility 0s;
+}
+
+.answer {
+  max-width: 680px;
+  margin: 0;
+  overflow: hidden;
+  color: rgba(var(--ink-rgb), 0.72);
+  font-size: 17px;
+  line-height: 28px;
+  opacity: 0;
+  transition: opacity 0.24s;
+}
+
+.isOpen .answer {
+  opacity: 1;
+}
+
+.answerInner {
+  display: block;
+  padding-bottom: 30px;
+}
+
+/* Without scripting no row can be opened, so every answer is shown. */
+@media (scripting: none) {
+  .body {
+    grid-template-rows: 1fr;
+    visibility: visible;
+  }
+
+  .answer {
+    opacity: 1;
+  }
+
+  .mark {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .inner {
+    gap: 64px;
+  }
+
+  .heading {
+    width: 340px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .section {
+    min-height: 0;
+    padding-block: 104px;
+  }
+
+  .inner {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .heading {
+    width: 100%;
+  }
+
+  .list {
+    flex: none;
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding-block: 80px;
+  }
+
+  .trigger {
+    gap: 20px;
+    padding-block: 22px;
+  }
+
+  .question {
+    font-size: 17px;
+    line-height: 26px;
+  }
+
+  .answer {
+    font-size: 16px;
+    line-height: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .body,
+  .isOpen .body,
+  .markStem,
+  .answer {
+    transition: none;
+  }
+}

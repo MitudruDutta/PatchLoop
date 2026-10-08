@@ -1,0 +1,297 @@
+.closer {
+  background: var(--field);
+  color: var(--cream);
+}
+
+/* The closing band: the ground deepens into the field behind the headline. */
+
+.band {
+  position: relative;
+  height: 540px;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    var(--ground) 0%,
+    var(--edge-soft) 11%,
+    var(--field-mid) 30%,
+    var(--field) 48%
+  );
+}
+
+/* --pp (0 to 1) is written by usePinnedProgress as the band scrolls in.
+   Without scripting it is unset and the headline is simply shown. */
+.say {
+  --reveal: clamp(0, calc((var(--pp, 1) - 0.4) * 2.63), 1);
+  position: absolute;
+  top: 196px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(1040px, calc(100vw - var(--rail-gutter) * 2));
+  text-align: center;
+  opacity: var(--reveal);
+  transform: translateX(-50%) translateY(calc((1 - var(--reveal)) * 14px));
+}
+
+.headline {
+  margin: 0;
+  color: var(--cream);
+  font-size: 62px;
+  font-weight: 300;
+  line-height: 74px;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+/* Footer */
+
+.plinth {
+  padding-bottom: 44px;
+}
+
+.rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--cream-rgb), 0) 0%,
+    rgba(var(--cream-rgb), 0.18) 8%,
+    rgba(var(--cream-rgb), 0.18) 92%,
+    rgba(var(--cream-rgb), 0) 100%
+  );
+}
+
+.columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 96px;
+  padding-top: 64px;
+}
+
+.brand {
+  flex-shrink: 0;
+  width: 400px;
+  max-width: 100%;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--cream);
+}
+
+.blurb {
+  margin: 22px 0 0;
+  color: rgba(var(--cream-rgb), 0.62);
+  font-size: 15px;
+  line-height: 26px;
+}
+
+.contact {
+  --bracket-arm: 12px;
+  --bracket-color: rgba(var(--cream-rgb), 0.34);
+  position: relative;
+  margin-top: 40px;
+  padding: 26px 24px;
+}
+
+.contactTitle {
+  margin: 0;
+  color: var(--cream);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.contactBlurb {
+  margin: 6px 0 0;
+  color: rgba(var(--cream-rgb), 0.62);
+  font-size: 17px;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.emailField {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  margin-top: 22px;
+  border: 1px solid rgba(var(--cream-rgb), 0.18);
+  border-radius: var(--radius-field);
+  background: rgba(var(--cream-rgb), 0.06);
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
+}
+
+.emailField:hover {
+  border-color: rgba(var(--cream-rgb), 0.3);
+  background: rgba(var(--cream-rgb), 0.1);
+}
+
+.contactEmail {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  height: 100%;
+  padding: 0 16px;
+  color: var(--cream);
+  font-size: 15.5px;
+  line-height: 25px;
+  text-decoration: none;
+}
+
+.contactEmail:focus-visible,
+.copyEmail:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.copyEmail {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  height: 22px;
+  padding: 0 16px;
+  border: 0;
+  border-left: 1px solid rgba(var(--cream-rgb), 0.22);
+  background: none;
+  color: rgba(var(--cream-rgb), 0.7);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 22px;
+  transition: color 0.2s;
+}
+
+.copyEmail:hover {
+  color: var(--cream);
+}
+
+.linkColumns {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 48px;
+  min-width: 0;
+  max-width: 620px;
+  margin-left: auto;
+}
+
+.columnTitle {
+  margin: 0 0 14px;
+  color: rgba(var(--cream-rgb), 0.58);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 22px;
+}
+
+.columnList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  color: var(--cream);
+  font-size: 15px;
+  line-height: 22px;
+  text-decoration: none;
+  transition:
+    color 0.26s,
+    text-shadow 0.26s;
+}
+
+.link:hover {
+  color: var(--white);
+  text-shadow:
+    0 0 8px rgba(var(--signal-rgb), 0.5),
+    0 0 22px rgba(var(--signal-rgb), 0.28);
+}
+
+.foot {
+  padding-top: 54px;
+  color: rgba(var(--cream-rgb), 0.58);
+  font-size: 13.5px;
+  line-height: 22px;
+}
+
+@media (max-width: 1024px) {
+  .band {
+    height: 500px;
+  }
+
+  .say {
+    top: 180px;
+  }
+
+  .columns {
+    flex-direction: column;
+    gap: 56px;
+    padding-top: 48px;
+  }
+
+  .linkColumns {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .band {
+    height: 500px;
+  }
+
+  .say {
+    top: 160px;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-self: stretch;
+    align-items: stretch;
+  }
+
+  .brand {
+    width: 100%;
+  }
+
+  .linkColumns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+
+  .emailField,
+  .copyEmail,
+  .link {
+    transition: none;
+  }
+}

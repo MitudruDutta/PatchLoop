@@ -1,0 +1,43 @@
+.header {
+  display: flex;
+  align-items: flex-end;
+  gap: 64px;
+}
+
+.heading {
+  flex: 1 1 700px;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.stand {
+  flex-shrink: 0;
+  width: 480px;
+  color: rgba(var(--ink-rgb), 0.7);
+}
+
+.dark .heading {
+  color: var(--cream);
+}
+
+.dark .stand {
+  color: rgba(var(--cream-rgb), 0.74);
+}
+
+@media (max-width: 1024px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 28px;
+  }
+
+  .heading {
+    flex: 0 1 auto;
+  }
+
+  .stand {
+    flex-shrink: 1;
+    width: auto;
+    max-width: 480px;
+  }
+}

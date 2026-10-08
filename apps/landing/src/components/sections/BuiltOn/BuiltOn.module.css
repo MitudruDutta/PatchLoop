@@ -1,0 +1,167 @@
+.section {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 24px var(--rail-gutter) 72px;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+}
+
+.say {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lede {
+  color: rgba(var(--ink-rgb), 0.72);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+  padding: 22px 0 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px 7px 14px;
+  border: 1px solid rgba(var(--ink-rgb), 0.18);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.link:hover {
+  border-color: var(--link);
+  transform: translateY(-1px);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--field);
+  outline-offset: 3px;
+}
+
+.arrow {
+  color: var(--link);
+  transition: transform 0.2s;
+}
+
+.link:hover .arrow {
+  transform: translateX(3px);
+}
+
+/* Ticker */
+
+.marquee {
+  width: calc(100% + var(--rail-gutter) * 2);
+  margin-top: 44px;
+  margin-inline: calc(var(--rail-gutter) * -1);
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 10% 90%, transparent);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  animation: scroll 52s linear infinite;
+}
+
+.marquee:hover .track,
+.marquee:focus-within .track {
+  animation-play-state: paused;
+}
+
+@keyframes scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  flex: none;
+  padding: 0 clamp(18px, 2.6vw, 36px);
+}
+
+.command {
+  color: rgba(var(--ink-rgb), 0.66);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.command:hover {
+  color: var(--ink);
+}
+
+.command:focus-visible {
+  outline: 2px solid var(--field);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .section {
+    padding: 16px var(--rail-gutter) 56px;
+  }
+}
+
+/* No motion: a wrapped, centred list, shown once. */
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .arrow,
+  .command {
+    transition: none;
+  }
+
+  .marquee {
+    width: 100%;
+    margin-inline: 0;
+    mask-image: none;
+  }
+
+  .track {
+    width: 100%;
+    animation: none;
+  }
+
+  .group {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 12px;
+    width: 100%;
+  }
+
+  .duplicate {
+    display: none;
+  }
+}

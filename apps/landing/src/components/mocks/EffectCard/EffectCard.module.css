@@ -1,0 +1,57 @@
+.record {
+  color: rgba(var(--ink-rgb), 0.72);
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.table {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr 1fr;
+  margin-top: 10px;
+  column-gap: 12px;
+}
+
+.th {
+  padding-bottom: 7px;
+  color: rgba(var(--ink-rgb), 0.66);
+}
+
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  padding: 8px 0;
+  border-top: 1px solid rgba(var(--ink-rgb), 0.1);
+  font-size: 13px;
+  line-height: 19px;
+}
+
+.field {
+  color: rgba(var(--ink-rgb), 0.72);
+}
+
+.value {
+  color: var(--ink);
+}
+
+.changed {
+  color: var(--deny);
+  font-weight: 500;
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: rgba(var(--ink-rgb), 0.72);
+  font-size: 13.5px;
+  line-height: 20px;
+}
+
+.session {
+  color: var(--ink);
+  font-size: 12.5px;
+}

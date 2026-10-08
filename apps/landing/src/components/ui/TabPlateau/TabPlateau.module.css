@@ -1,0 +1,133 @@
+.hold {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  z-index: 1;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 10px 8px;
+  background: var(--ground);
+  border: 1px solid rgba(var(--ink-rgb), 0.12);
+  border-top: 0;
+  border-radius: 0 0 14px 14px;
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tab {
+  flex-shrink: 0;
+  padding: 6px 13px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(var(--ink-rgb), 0.7);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[data-active] {
+  background: var(--white);
+  color: var(--ink);
+  box-shadow:
+    0 0 0 1px rgba(var(--ink-rgb), 0.08),
+    0 2px 6px -2px rgba(var(--ink-rgb), 0.2);
+}
+
+.tab:focus-visible,
+.step:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.step {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: rgba(var(--ink-rgb), 0.7);
+}
+
+.step:hover {
+  color: var(--ink);
+  background: rgba(var(--ink-rgb), 0.06);
+}
+
+.count {
+  display: none;
+  flex-shrink: 0;
+  padding: 0 6px;
+  color: rgba(var(--ink-rgb), 0.66);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stepper mode */
+@media (max-width: 860px) {
+  .hold {
+    width: max-content;
+  }
+
+  .strip {
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
+  .tabs {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .tab {
+    display: none;
+    padding: 6px 10px;
+  }
+
+  .tab[data-active] {
+    display: block;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .step {
+    display: inline-flex;
+  }
+
+  .count {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+}

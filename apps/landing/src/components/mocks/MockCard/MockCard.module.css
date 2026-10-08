@@ -1,0 +1,36 @@
+.card {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-tile);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+  color: var(--ink);
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 22px;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding-bottom: 14px;
+}
+
+.title {
+  font-size: 15.5px;
+  font-weight: 500;
+  line-height: 22px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 640px) {
+  .inner {
+    padding: 16px;
+  }
+}

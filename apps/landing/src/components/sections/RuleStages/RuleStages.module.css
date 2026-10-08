@@ -1,0 +1,153 @@
+.section {
+  color: var(--ink);
+}
+
+.headingRow {
+  padding-top: 132px;
+}
+
+.heading {
+  max-width: 700px;
+}
+
+/* Stacked layout: the default, and what reduced motion and no-script get. */
+
+.pin {
+  padding-block: 88px 96px;
+}
+
+.pane {
+  display: grid;
+  grid-template-columns: 520px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 96px;
+}
+
+.pane + .pane {
+  margin-top: 76px;
+}
+
+.label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 33px;
+  font-weight: 400;
+  line-height: 42px;
+  letter-spacing: -0.022em;
+}
+
+.body {
+  margin: 18px 0 0;
+  color: rgba(var(--ink-rgb), 0.66);
+  font-size: 21.5px;
+  line-height: 32px;
+  letter-spacing: -0.012em;
+}
+
+.cta {
+  margin-top: 30px;
+}
+
+.art {
+  height: 400px;
+}
+
+/* Pinned layout: every pane shares one cell and fades with scroll position.
+   --pos (0 to 2) is written on .runway by usePinnedProgress; --i is the pane's index. */
+
+@media (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .runway {
+    --stage-run: 150svh;
+    height: calc(100svh + var(--stage-run));
+  }
+
+  .pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    height: 100svh;
+    padding-block: 0;
+  }
+
+  .grid {
+    display: grid;
+  }
+
+  .pane {
+    --d: max(calc(var(--pos, 0) - var(--i)), calc(var(--i) - var(--pos, 0)));
+    --t: clamp(0, calc((0.5 - var(--d)) / 0.36), 1);
+    grid-area: 1 / 1;
+    opacity: calc(var(--t) * var(--t) * (3 - 2 * var(--t)));
+    pointer-events: none;
+  }
+
+  .pane + .pane {
+    margin-top: 0;
+  }
+
+  .paneActive {
+    pointer-events: auto;
+  }
+
+  .copy {
+    transform: translateY(calc((var(--pos, 0) - var(--i)) * -26px));
+  }
+
+  .cta {
+    visibility: hidden;
+  }
+
+  .paneActive .cta {
+    visibility: visible;
+  }
+
+  .art {
+    height: min(620px, 78svh);
+  }
+}
+
+@media (max-width: 1024px) {
+  .headingRow {
+    padding-top: 96px;
+  }
+
+  .pin {
+    padding-block: 56px 72px;
+  }
+
+  .pane {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 28px;
+  }
+
+  .art {
+    order: -1;
+    height: 340px;
+  }
+
+  .label {
+    font-size: 29px;
+    line-height: 37px;
+  }
+
+  .body {
+    margin-top: 14px;
+    font-size: 18.5px;
+    line-height: 29px;
+  }
+}
+
+@media (max-width: 1024px) and (prefers-reduced-motion: no-preference) and (scripting: enabled) {
+  .runway {
+    --stage-run: 110svh;
+  }
+
+  .pin {
+    padding-block: 28px;
+  }
+
+  .art {
+    height: min(44svh, 400px);
+  }
+}

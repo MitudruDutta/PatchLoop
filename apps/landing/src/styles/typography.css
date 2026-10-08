@@ -1,0 +1,116 @@
+/* Type scale: docs/prd/landing.md, section 6.2. */
+
+:root {
+  --type-h2-size: 50px;
+  --type-h2-line: 58px;
+  --type-hero-lede-size: 18px;
+  --type-hero-lede-line: 28px;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --type-h2-size: 37px;
+    --type-h2-line: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --type-h2-size: 31px;
+    --type-h2-line: 38px;
+    --type-hero-lede-size: 17px;
+    --type-hero-lede-line: 27px;
+  }
+}
+
+.t-display {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(32px, 8vw, 62px);
+  line-height: 1.19;
+  letter-spacing: -0.03em;
+  font-weight: 300;
+  text-wrap: balance;
+}
+
+.t-h2 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-line);
+  letter-spacing: -0.024em;
+  font-weight: 300;
+  text-wrap: balance;
+}
+
+.t-hero-lede {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--type-hero-lede-size);
+  line-height: var(--type-hero-lede-line);
+}
+
+.t-lede {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 27px;
+}
+
+.t-subhead {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+}
+
+.t-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15.5px;
+  line-height: 25px;
+}
+
+.t-value {
+  font-family: var(--font-sans);
+  font-size: 34px;
+  line-height: 38px;
+  letter-spacing: -0.035em;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.t-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 14px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.t-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,38 @@
+.turn,
+.call {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: rgba(var(--ink-rgb), 0.66);
+}
+
+.turn + .call,
+.call + .turn {
+  margin-top: 12px;
+}
+
+.bubble {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 10px;
+  background: rgba(var(--ink-rgb), 0.05);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.code {
+  display: block;
+  padding: 9px 13px;
+  overflow-wrap: anywhere;
+  border: 1px dashed rgba(var(--ink-rgb), 0.24);
+  border-radius: 10px;
+  color: rgba(var(--ink-rgb), 0.78);
+  font-size: 12.5px;
+  line-height: 19px;
+}
+
+.name {
+  color: var(--ink);
+  font-weight: 500;
+}

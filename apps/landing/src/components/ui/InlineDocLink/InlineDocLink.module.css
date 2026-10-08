@@ -1,0 +1,112 @@
+.native {
+  --native-ink: var(--link);
+  position: relative;
+  display: inline-block;
+  color: rgba(var(--ink-rgb), 0.58);
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.3);
+  text-decoration: none;
+}
+
+.native > span {
+  transition: opacity 0.24s;
+}
+
+.native:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+.dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  color: var(--native-ink);
+  -webkit-text-fill-color: transparent;
+  background-image: radial-gradient(currentColor 42%, transparent 45%);
+  background-size: 3px 3px;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.native:hover > span:first-child,
+.native:focus-visible > span:first-child {
+  opacity: 0;
+}
+
+.native:hover .dots,
+.native:focus-visible .dots {
+  opacity: 1;
+}
+
+.lead {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+  pointer-events: none;
+}
+
+.rule {
+  width: 0;
+  height: 1px;
+  background: rgba(var(--ink-rgb), 0.3);
+  transition: width 0.32s var(--ease-arrive);
+}
+
+.tick {
+  width: 1px;
+  height: 7px;
+  background: rgba(var(--ink-rgb), 0.3);
+  opacity: 0;
+  transition: opacity 0.24s 0.12s;
+}
+
+.label {
+  margin-left: 5px;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: rgba(var(--ink-rgb), 0.7);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition:
+    opacity 0.26s ease 0.14s,
+    transform 0.26s var(--ease-arrive) 0.14s;
+}
+
+.native:hover .rule,
+.native:focus-visible .rule {
+  width: 78px;
+}
+
+.native:hover .tick,
+.native:focus-visible .tick {
+  opacity: 1;
+}
+
+.native:hover .label,
+.native:focus-visible .label {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none), (max-width: 640px) {
+  .lead {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .native > span,
+  .rule,
+  .tick,
+  .label {
+    transition: none;
+  }
+}

@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "@patchloop/brand/tokens.css";
+@import "../styles/typography.css";
+@import "../styles/motion.css";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-field: var(--field);
+  --color-ground: var(--ground);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-signal: var(--signal);
+  --color-link: var(--link);
+}
+
+html {
+  background: var(--field);
+  color-scheme: light;
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: var(--field);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+main {
+  background: var(--ground);
+}
+
+[id] {
+  scroll-margin-top: 24px;
+}
+
+button {
+  cursor: pointer;
+}
+
+code,
+kbd,
+pre {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: rgba(var(--signal-rgb), 0.55);
+  color: var(--ink);
+}
+
+.skip-link {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 50;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--cream);
+  color: var(--field);
+  font-size: 14.5px;
+  font-weight: 500;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+  outline: 2px solid var(--signal);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

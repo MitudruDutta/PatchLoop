@@ -1,0 +1,35 @@
+.mark {
+  display: block;
+}
+
+.ring {
+  stroke: rgba(var(--cream-rgb), 0.3);
+  stroke-width: 1;
+}
+
+.ringInner {
+  stroke: rgba(var(--cream-rgb), 0.16);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.orbit {
+  transform-origin: 22px 22px;
+  animation: spin 9s linear infinite;
+}
+
+.dot {
+  fill: var(--signal);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit {
+    animation: none;
+  }
+}

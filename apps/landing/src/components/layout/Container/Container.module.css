@@ -1,0 +1,4 @@
+.rail {
+  width: var(--rail);
+  margin-inline: auto;
+}
