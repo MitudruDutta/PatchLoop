@@ -6,6 +6,9 @@ import sys
 COMMANDS = {
     "report": ("patchloop.sdk.report", "Summarize SDK recordings by tool and decision"),
     "doctor": ("patchloop.sdk.doctor", "Check a PatchLoop setup for gaps in protection"),
+    "test": ("patchloop.loop.tester", "Test an agent with a Nemotron tester and judge in a test environment"),
+    "propose": ("patchloop.loop.propose", "Draft a rule set with Nemotron and check it"),
+    "replay": ("patchloop.loop.replay", "Replay recorded calls against another rule set"),
     "providers": ("patchloop.providers", "Check model and search provider access"),
 }
 

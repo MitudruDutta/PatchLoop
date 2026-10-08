@@ -232,7 +232,7 @@ def test_tool_errors_are_recorded_by_type_only_and_re_raised(tmp_path):
     assert (line["outcome"], line["error"]) == ("error", "KeyError")
 
 
-def test_recordings_keep_only_bound_arguments_by_default(tmp_path):
+def test_recordings_keep_bound_and_identifier_arguments_by_default(tmp_path):
     _, guard, tools = protected(tmp_path)
     tools["search"]("private words")
     with identify("ada"):
@@ -240,6 +240,10 @@ def test_recordings_keep_only_bound_arguments_by_default(tmp_path):
     lines = recordings(tmp_path)
     assert lines[0]["arguments"] == {"query": "[redacted]", "limit": "[redacted]"}
     assert lines[1]["arguments"] == {"note_id": "n1"}
+    log = guard.tool(lambda password, order_id, item_ids, customerId, valid, user_id: 1, name="log_in")
+    log("hunter2", "o1", ["i1", 2], 7, "x", {"nested": "secret"})
+    assert recordings(tmp_path)[2]["arguments"] == {"password": "[redacted]", "order_id": "o1", "item_ids": ["i1", 2],
+                                                    "customerId": 7, "valid": "[redacted]", "user_id": "[redacted]"}
     assert tools["search"].__name__ == "search_notes"
 
 
@@ -362,3 +366,16 @@ def test_report_counts_decisions_per_tool(tmp_path, capsys, monkeypatch):
     assert "not_owner x1" in capsys.readouterr().out
     monkeypatch.setattr("sys.argv", ["patchloop report", str(tmp_path / "missing.jsonl")])
     assert report.main() == 2
+
+
+def test_observers_see_every_call_without_a_file_and_cannot_break_it():
+    app = App()
+    guard = PatchLoop(Ruleset(RULES), facts=app.facts)
+    seen = []
+    unsubscribe = guard.subscribe(seen.append)
+    guard.subscribe(lambda line: 1 / 0)
+    search = guard.tool(lambda query: "found", name="search")
+    assert search("x") == "found"
+    unsubscribe()
+    search("y")
+    assert [(line["tool"], line["outcome"]) for line in seen] == [("search", "ok")]

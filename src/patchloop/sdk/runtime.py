@@ -17,6 +17,7 @@ import hashlib
 import inspect
 import json
 import logging
+import re
 import threading
 import time
 from contextlib import contextmanager
@@ -24,7 +25,7 @@ from datetime import datetime, timezone
 from importlib import metadata
 from pathlib import Path
 
-from .rules import Decision, Ruleset, principal_of
+from .rules import Decision, Ruleset, is_identifier, principal_of
 
 log = logging.getLogger("patchloop")
 MODES = ("observe", "warn", "enforce")
@@ -35,6 +36,7 @@ try:
 except metadata.PackageNotFoundError:
     SDK = "python/unknown"
 
+_IDENTIFIER_NAME = re.compile(r"(^|_)ids?$|[a-z]Ids?$")
 _principal = contextvars.ContextVar("patchloop_principal", default=None)
 _client = None
 
@@ -113,7 +115,9 @@ class PatchLoop:
 
     Modes: "observe" runs every call and records the decision; "warn" also logs and calls
     on_violation; "enforce" runs only allowed calls and raises Blocked for the rest.
-    Recordings keep only the arguments the rule set uses unless `redact` says otherwise.
+    Recordings keep the arguments the rule set uses, plus identifier values of arguments named like
+    identifiers (id, ticket_id, ticket_ids, ticketId), so a later rule set can be replayed; every other
+    value is "[redacted]" unless `redact` says otherwise.
     """
 
     def __init__(self, rules, *, facts, identity=None, mode="observe", modes=None, recordings=None,
@@ -131,6 +135,7 @@ class PatchLoop:
         self.consents = consents or ConsentLedger()
         self.registered = {}
         self._signatures = {}
+        self._observers = []
         self._lock = threading.Lock()
 
     # Registration
@@ -256,6 +261,14 @@ class PatchLoop:
             raise Blocked(decision)
         return call
 
+    def subscribe(self, observer):
+        """Call observer(line) with every recording line, even without a recordings file.
+
+        Returns a function that removes the observer.
+        """
+        self._observers.append(observer)
+        return lambda: self._observers.remove(observer)
+
     # Diagnostics
 
     def unreviewed(self) -> list[str]:
@@ -293,7 +306,11 @@ class PatchLoop:
     def _bound_arguments(self, tool, arguments):
         rule = self.rules.tools.get(tool) or {}
         keep = {_top_key(binding["argument"]) for binding in rule.get("resources", [])}
-        return {key: value if key in keep else "[redacted]" for key, value in arguments.items()}
+
+        def identifiers(value):
+            return is_identifier(value) or (isinstance(value, list) and all(map(is_identifier, value)))
+        return {key: value if key in keep or (_IDENTIFIER_NAME.search(key) and identifiers(value)) else "[redacted]"
+                for key, value in arguments.items()}
 
     def _notify(self, decision):
         if self.on_violation is None:
@@ -305,7 +322,7 @@ class PatchLoop:
 
     def _record(self, call, outcome, error=None):
         # A recording failure must never change the tool's outcome: the tool may already have run.
-        if self.recordings is None:
+        if self.recordings is None and not self._observers:
             return
         try:
             line = {
@@ -318,9 +335,15 @@ class PatchLoop:
                 "mode": call["mode"], "executed": outcome != "blocked", "outcome": outcome,
                 "error": type(error).__name__ if error is not None else None,
             }
-            text = json.dumps(line, default=repr, ensure_ascii=False) + "\n"
-            with self._lock, self.recordings.open("a", encoding="utf-8") as file:
-                file.write(text)
+            for observer in list(self._observers):
+                try:
+                    observer(line)
+                except Exception:
+                    log.exception("recording observer failed")
+            if self.recordings is not None:
+                text = json.dumps(line, default=repr, ensure_ascii=False) + "\n"
+                with self._lock, self.recordings.open("a", encoding="utf-8") as file:
+                    file.write(text)
         except Exception:
             log.exception("could not write recording for %s", call["tool"])
 

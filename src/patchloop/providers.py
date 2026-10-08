@@ -44,6 +44,14 @@ def _credential(name: str) -> str:
     return value
 
 
+def nemotron_model() -> str:
+    """The NVIDIA Nemotron model named by NEBIUS_MODEL."""
+    model = _credential("NEBIUS_MODEL")
+    if not model.lower().startswith("nvidia/") or "nemotron" not in model.lower():
+        raise ProviderError("Select an NVIDIA Nemotron model from the catalog")
+    return model
+
+
 def request_json(url: str, key: str, payload: dict | None = None) -> dict:
     data = None if payload is None else json.dumps(payload).encode()
     request = Request(url, data=data, headers={
@@ -160,8 +168,7 @@ class TavilyClient:
     def __init__(self):
         self._key = _credential("TAVILY_API_KEY")
 
-    def guidance(self) -> dict:
-        query = "OWASP authorization deny by default validate permissions every request"
+    def guidance(self, query: str = "OWASP authorization deny by default validate permissions every request") -> dict:
         response = request_json(TAVILY_SEARCH, self._key, {
             "query": query, "search_depth": "basic", "max_results": 3,
             "include_domains": ["cheatsheetseries.owasp.org"],
@@ -191,12 +198,9 @@ def main():
         if args.command == "models":
             result = {"models": NebiusClient().models()}
         elif args.command == "smoke":
-            model = _credential("NEBIUS_MODEL")
-            if not model.lower().startswith("nvidia/") or "nemotron" not in model.lower():
-                raise ProviderError("Select an NVIDIA Nemotron model from the catalog")
             result = NebiusClient().complete([
                 {"role": "user", "content": "Reply with one sentence explaining tool authorization."},
-            ], model=model)
+            ], model=nemotron_model())
         else:
             result = TavilyClient().guidance()
     except ProviderError as exc:

@@ -4,7 +4,7 @@ PatchLoop puts authorization rules at the tool boundary of an AI agent. The agen
 
 It works with any agent framework: wrap plain Python tools with a decorator, or add one adapter to FastMCP, LangChain, LangGraph or Strands.
 
-**Status (8 October 2026):** version 0.1 in development. The rule engine, the Python SDK runtime, framework adapters, recordings, `patchloop report`, `patchloop doctor` and the language-neutral specification are implemented and tested. Rule set proposal from recordings, adversarial testing against a test environment, and the hosted control plane are next.
+**Status (8 October 2026):** version 0.1 in development. The rule engine, the Python SDK runtime, framework adapters, recordings, `patchloop report`, `patchloop doctor`, the language-neutral specification, and the find, fix and prove loop (`patchloop test`, `propose`, `replay`) are implemented and tested. The hosted control plane, the TypeScript SDK and more adapters are next.
 
 ## Install
 
@@ -128,13 +128,47 @@ patchloop doctor myapp.agent:guard     # or a PatchLoop instance
 
 Tools behind an adapter are not wrapped by PatchLoop; pass them to `patchloop.doctor(tools={"name": function_or_parameter_list})`.
 
+## Find, fix and prove
+
+Three commands close the loop. `test` and `propose` call an NVIDIA Nemotron model on [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (set `NEBIUS_API_KEY` and `NEBIUS_MODEL`); `propose` also reads public guidance through [Tavily](https://docs.tavily.com/) (`TAVILY_API_KEY`). These are paid requests. `replay` makes none.
+
+**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Point it at a module that provides:
+
+```python
+guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
+USERS = [{"subject": "ada", "tenant": "acme"}, {"subject": "bo", "tenant": "acme"}]
+NOTES = "Ticket T1 belongs to ada, T2 to bo."                     # optional, helps the tester and judge
+
+def agent(message: str, history: list[dict]) -> str: ...        # one turn of your agent
+def reset(): ...                                                  # optional: restore test data
+```
+
+```bash
+patchloop test myapp.test_target --scenarios 3 --turns 4 --report find.json
+```
+
+Use test data only: outside enforce mode, the agent's tools really run.
+
+**Fix: `patchloop propose`.** Nemotron drafts a rule set from the tool catalog, record samples, your policy text, the current rules and the tester's findings. Each draft is checked against the specification, the catalog and the samples, and the problems go back to the model. Nothing is activated: you review the draft.
+
+```bash
+patchloop propose --target myapp.test_target --samples samples.json --policy policy.md \
+    --rules rules.json --findings find.json --recordings calls.jsonl --output rules.proposed.json
+```
+
+**Prove: `patchloop replay`.** Replays recorded calls against the draft and lists every call it would newly block or newly allow. It uses the lookups saved in the recordings. When the old rules never looked a record up, pass live facts. A call that cannot be replayed is reported as such, never guessed.
+
+```bash
+patchloop replay calls.jsonl --rules rules.proposed.json --facts myapp.test_target:guard.facts --fail-on newly_allowed
+```
+
 ## Rule sets
 
 A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
 
 ## Reports
 
-Every call writes one JSON line to the recordings file. By default only the arguments that the rule set uses are kept; the rest are replaced with `[redacted]`. Pass `redact=lambda tool, arguments: ...` to change that. An error is recorded by its exception type only, never its message.
+Every call writes one JSON line to the recordings file. By default the recording keeps the arguments that the rule set uses, plus identifier values of arguments named like identifiers (`id`, `ticket_id`, `ticket_ids`, `ticketId`), so that a later rule set can be replayed. Every other value is replaced with `[redacted]`. Pass `redact=lambda tool, arguments: ...` to change that. An error is recorded by its exception type only, never its message.
 
 ```bash
 patchloop report calls.jsonl            # calls, decisions and reasons per tool
@@ -148,7 +182,7 @@ patchloop report calls.jsonl --strict   # exit 1 if any call was not allowed (fo
 
 ## Model providers
 
-`patchloop providers` checks access to [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (NVIDIA Nemotron models) and [Tavily Search](https://docs.tavily.com/), which later stages use to propose rule sets and test agents. Keys come from environment variables only; `.env.example` lists their names. Never commit keys.
+`patchloop providers` checks access to [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (NVIDIA Nemotron models) and [Tavily Search](https://docs.tavily.com/), which `test` and `propose` use. Keys come from environment variables only; `.env.example` lists their names. Never commit keys.
 
 ```bash
 patchloop providers models
@@ -173,6 +207,7 @@ src/patchloop/
   sdk/runtime.py      PatchLoop: tool wrapping, modes, hooks, recordings
   sdk/report.py       `patchloop report`
   sdk/doctor.py       `patchloop doctor`
+  loop/               `patchloop test`, `propose` and `replay`: the find, fix and prove loop
   integrations/       FastMCP, LangChain/LangGraph and Strands adapters
   sandbox/            Isolated execution of generated functions
   providers.py        Nebius Token Factory and Tavily clients
