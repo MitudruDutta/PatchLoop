@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "name": "agent-wallet",
+  "version": "2",
+  "description": "The agent pays only recipients the signed-in user saved, only in approved tokens, within fixed amounts, and every payment needs the user's confirmation.",
+  "resources": {
+    "recipient": {"owner_field": "user_id"},
+    "token": {"allowlist": true}
+  },
+  "tools": {
+    "WalletActionProvider_get_wallet_details": {"access": "authenticated", "effect": "none"},
+    "WalletActionProvider_get_balance": {"access": "authenticated", "effect": "none"},
+    "ERC20ActionProvider_get_balance": {"access": "authenticated", "effect": "none",
+      "description": "Any address and token: balances on a public chain are public."},
+    "ERC20ActionProvider_get_allowance": {"access": "authenticated", "effect": "none"},
+    "ERC20ActionProvider_get_token_address": {"access": "public", "effect": "none"},
+    "WalletActionProvider_native_transfer": {"access": "scoped", "effect": "external", "consent": true,
+      "resources": [{"argument": "to", "resource": "recipient"}],
+      "limits": [{"argument": "value", "max": "0.01"}]},
+    "ERC20ActionProvider_transfer": {"access": "scoped", "effect": "external", "consent": true,
+      "resources": [{"argument": "contract_address", "resource": "token"},
+                    {"argument": "destination_address", "resource": "recipient"}],
+      "limits": [{"argument": "amount", "max": "10"}]},
+    "ERC20ActionProvider_approve": {"access": "scoped", "effect": "external", "consent": true,
+      "resources": [{"argument": "contract_address", "resource": "token"},
+                    {"argument": "spender_address", "resource": "recipient"}],
+      "limits": [{"argument": "amount", "max": "10"}]}
+  }
+}

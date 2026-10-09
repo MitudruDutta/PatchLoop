@@ -133,7 +133,7 @@ Tools behind an adapter are not wrapped by PatchLoop; pass them to `patchloop.do
 
 ## Try it on a real agent
 
-[docs/guides/coinbase-agentkit.md](docs/guides/coinbase-agentkit.md) walks through every step on an open-source Coinbase AgentKit wallet agent: rules, facts, the Strands adapter, `doctor`, observe and enforce, consent, and the find, fix and prove loop with Nemotron and Tavily.
+[docs/guides/coinbase-agentkit.md](docs/guides/coinbase-agentkit.md) walks through every step on an open-source Coinbase AgentKit wallet agent, and [examples/coinbase-agentkit](examples/coinbase-agentkit/) holds the finished files and the results of repeated trials: rules, facts, the Strands adapter, `doctor`, observe and enforce, consent, and the find, fix and prove loop with Nemotron and Tavily.
 
 ## Find, fix and prove
 
@@ -141,7 +141,7 @@ Three commands close the loop. `test` and `propose` call an NVIDIA Nemotron mode
 
 Each role can use its own Nemotron model: `NEBIUS_MODEL_PROPOSER`, `NEBIUS_MODEL_PLANNER`, `NEBIUS_MODEL_CUSTOMER` and `NEBIUS_MODEL_JUDGE`, each falling back to `NEBIUS_MODEL`. A small model such as Nemotron Nano is enough for the customer; keep a larger one for proposing and judging. Plans, verdicts and drafts use Token Factory's JSON output, and every report includes token totals.
 
-**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Point it at a module that provides:
+**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A call that changed, sent or paid something without the user's consent is an unconfirmed effect, read from the rule set itself. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Treat these as leads to review, not verdicts. Point it at a module that provides:
 
 ```python
 guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
@@ -174,7 +174,7 @@ patchloop replay calls.jsonl --rules rules.proposed.json --facts myapp.test_targ
 
 ## Rule sets
 
-A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. Rule format version 2 adds amount limits: `"limits": [{"argument": "amount", "max": "0.01"}]` denies a call whose amount is greater, compared as exact decimals. The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
+A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. Rule format version 2 adds amount limits, `"limits": [{"argument": "amount", "max": "0.01"}]`, which deny a call whose amount is greater (compared as exact decimals), and allowlist resources, `{"allowlist": true}`, for approved items such as tokens or domains. How to write a rule set for your agent, and what to keep in mind: [docs/guides/writing-rules.md](docs/guides/writing-rules.md). The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
 
 ## Reports
 

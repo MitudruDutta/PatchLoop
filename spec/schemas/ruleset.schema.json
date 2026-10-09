@@ -18,6 +18,7 @@
         "additionalProperties": false,
         "properties": {
           "principal": {"const": true},
+          "allowlist": {"const": true, "description": "Version 2 only. The record only has to exist."},
           "owner_field": {"type": "string", "minLength": 1},
           "tenant_field": {"type": "string", "minLength": 1},
           "parent": {

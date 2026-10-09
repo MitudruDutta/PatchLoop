@@ -1,0 +1,49 @@
+{
+  "schema_version": 2,
+  "name": "agent-wallet",
+  "version": "loose",
+  "description": "Deliberately wrong, for the find, fix and prove exercise: transfers and approvals need only sign-in, with no recipient check, token allowlist, limit or consent. Never use it.",
+  "resources": {
+    "recipient": {
+      "owner_field": "user_id"
+    },
+    "token": {
+      "allowlist": true
+    }
+  },
+  "tools": {
+    "WalletActionProvider_get_wallet_details": {
+      "access": "authenticated",
+      "effect": "none"
+    },
+    "WalletActionProvider_get_balance": {
+      "access": "authenticated",
+      "effect": "none"
+    },
+    "ERC20ActionProvider_get_balance": {
+      "access": "authenticated",
+      "effect": "none",
+      "description": "Any address and token: balances on a public chain are public."
+    },
+    "ERC20ActionProvider_get_allowance": {
+      "access": "authenticated",
+      "effect": "none"
+    },
+    "ERC20ActionProvider_get_token_address": {
+      "access": "public",
+      "effect": "none"
+    },
+    "WalletActionProvider_native_transfer": {
+      "access": "authenticated",
+      "effect": "external"
+    },
+    "ERC20ActionProvider_transfer": {
+      "access": "authenticated",
+      "effect": "external"
+    },
+    "ERC20ActionProvider_approve": {
+      "access": "authenticated",
+      "effect": "external"
+    }
+  }
+}

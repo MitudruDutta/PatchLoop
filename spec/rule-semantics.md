@@ -1,6 +1,6 @@
 # PatchLoop rule semantics, versions 1 and 2
 
-This document defines how an SDK decides whether one tool call may run. Version 2 adds amount limits (`limits` on tools) and the reason code `over_limit`; everything else is the same as version 1, and an SDK accepts both. Every SDK (Python, TypeScript) must give exactly the decisions in `conformance/decisions.json`. Change this document first, then the vectors, then each SDK.
+This document defines how an SDK decides whether one tool call may run. Version 2 adds amount limits (`limits` on tools, with the reason code `over_limit`) and allowlist resources (`allowlist: true`); everything else is the same as version 1, and an SDK accepts both. Every SDK (Python, TypeScript) must give exactly the decisions in `conformance/decisions.json`. Change this document first, then the vectors, then each SDK.
 
 ## 1. Inputs
 
@@ -63,6 +63,7 @@ Let `R` be the resource definition named by the binding, and `id` the item.
 2. Look up `(R's name, id)`:
    - **Unavailable** (the lookup raised an error): return **indeterminate** `facts_unavailable`.
    - **Missing:** return **deny** `resource_missing`.
+   - **Found**, and `R` has `allowlist: true` (version 2): the item passes. The record only has to exist; no owner or tenant is checked.
 3. If `R` has a `parent`, read the record's field named `parent.field`:
    - If the field is absent, `null` or not an identifier, return **indeterminate** `broken_parent`.
    - Otherwise check `(parent.resource, that value)` with this same section, starting at step 1. A parent lookup that is **missing** returns **indeterminate** `broken_parent`.
@@ -88,7 +89,8 @@ An SDK must refuse to load a rule set that breaks any of these rules:
 4. Each resource has exactly one of these forms:
    - `principal: true`;
    - a `parent` object with `resource` and `field`;
-   - at least one of `owner_field` and `tenant_field`.
+   - at least one of `owner_field` and `tenant_field`;
+   - `allowlist: true` (version 2 only): the record only has to exist, for example an approved token or domain.
 5. Every `parent.resource` and every binding's `resource` names a defined resource.
 6. Following `parent` links from any resource never revisits a resource, and takes at most **4** links.
 7. Each tool's `access` is `public`, `authenticated` or `scoped`. Its `effect` is `none`, `state_write` or `external`.

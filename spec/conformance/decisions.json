@@ -194,6 +194,9 @@
       "resources": {
         "recipient": {
           "owner_field": "user_id"
+        },
+        "token": {
+          "allowlist": true
         }
       },
       "tools": {
@@ -227,6 +230,27 @@
               "max": "0.5"
             }
           ]
+        },
+        "send_token": {
+          "access": "scoped",
+          "effect": "external",
+          "consent": true,
+          "resources": [
+            {
+              "argument": "contract_address",
+              "resource": "token"
+            },
+            {
+              "argument": "to",
+              "resource": "recipient"
+            }
+          ],
+          "limits": [
+            {
+              "argument": "amount",
+              "max": "10"
+            }
+          ]
         }
       }
     }
@@ -234,7 +258,7 @@
   "ruleset_sha256": {
     "helpdesk": "2bfefb58914adcb94ddb345e3341fb15ab875ff305cb747794418838546ee692",
     "deep": "bf670184944db5c4455c8be0ba1488ba6976bd25e14baeaad2300ff66764a110",
-    "wallet": "62feb188a77c976de8208a21487eabebba4f69d12751d2b13209adab08d1d8b6"
+    "wallet": "5a585535eb72faa12d797a1cc52a840701b20dc435092ce4ce3b39893f006226"
   },
   "facts": {
     "helpdesk": {
@@ -344,9 +368,19 @@
           "0xB": {
             "user_id": "bob"
           }
+        },
+        "token": {
+          "0xUSDC": {
+            "symbol": "USDC"
+          }
         }
       },
-      "unavailable": []
+      "unavailable": [
+        [
+          "token",
+          "0xDOWN"
+        ]
+      ]
     }
   },
   "cases": [
@@ -1556,6 +1590,96 @@
         "reason": "authorized"
       },
       "note": "The number 0.01 equals the decimal 0.01; as a binary float it would be slightly larger."
+    },
+    {
+      "id": "allowlist-listed",
+      "ruleset": "wallet",
+      "tool": "send_token",
+      "arguments": {
+        "contract_address": "0xUSDC",
+        "to": "0xA",
+        "amount": "5"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized",
+        "lookups": [
+          {
+            "resource": "token",
+            "id": "0xUSDC",
+            "status": "found"
+          },
+          {
+            "resource": "recipient",
+            "id": "0xA",
+            "status": "found",
+            "owner": "alice"
+          }
+        ]
+      },
+      "note": "An allowlist record only has to exist; its lookup reports no owner or tenant."
+    },
+    {
+      "id": "allowlist-not-listed",
+      "ruleset": "wallet",
+      "tool": "send_token",
+      "arguments": {
+        "contract_address": "0xWETH",
+        "to": "0xA",
+        "amount": "5"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "resource_missing"
+      }
+    },
+    {
+      "id": "allowlist-unavailable",
+      "ruleset": "wallet",
+      "tool": "send_token",
+      "arguments": {
+        "contract_address": "0xDOWN",
+        "to": "0xA",
+        "amount": "5"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "indeterminate",
+        "reason": "facts_unavailable"
+      }
+    },
+    {
+      "id": "allowlist-then-ownership",
+      "ruleset": "wallet",
+      "tool": "send_token",
+      "arguments": {
+        "contract_address": "0xUSDC",
+        "to": "0xB",
+        "amount": "5"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      }
     }
   ],
   "invalid_rulesets": [
@@ -3983,6 +4107,295 @@
         }
       },
       "why": "~ must be followed by 0 or 1"
+    },
+    {
+      "id": "allowlist-in-version-1",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "helpdesk",
+        "version": "conformance-1",
+        "resources": {
+          "customer": {
+            "principal": true
+          },
+          "ticket": {
+            "owner_field": "customer_id",
+            "tenant_field": "tenant_id"
+          },
+          "attachment": {
+            "parent": {
+              "resource": "ticket",
+              "field": "ticket_id"
+            }
+          },
+          "note": {
+            "owner_field": "author_id"
+          },
+          "shared_doc": {
+            "tenant_field": "tenant_id"
+          },
+          "vip": {
+            "allowlist": true
+          }
+        },
+        "tools": {
+          "search_articles": {
+            "access": "public",
+            "effect": "none"
+          },
+          "whoami": {
+            "access": "authenticated",
+            "effect": "none"
+          },
+          "get_customer_profile": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "customer_id",
+                "resource": "customer"
+              }
+            ]
+          },
+          "get_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_attachment": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "attachment_id",
+                "resource": "attachment"
+              }
+            ]
+          },
+          "get_note": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "note_id",
+                "resource": "note"
+              }
+            ]
+          },
+          "read_shared_doc": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "doc_id",
+                "resource": "shared_doc"
+              }
+            ]
+          },
+          "close_ticket": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "close_tickets": {
+            "access": "scoped",
+            "effect": "state_write",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "ticket_ids",
+                "resource": "ticket",
+                "cardinality": "many"
+              }
+            ]
+          },
+          "get_ticket_nested": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ref/ticket_id",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_ticket_escaped": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/a~1b~0c",
+                "resource": "ticket"
+              }
+            ]
+          },
+          "get_first_ticket": {
+            "access": "scoped",
+            "effect": "none",
+            "resources": [
+              {
+                "argument": "/ids/0",
+                "resource": "ticket"
+              }
+            ]
+          }
+        }
+      },
+      "why": "allowlist resources need schema_version 2"
+    },
+    {
+      "id": "allowlist-false",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          },
+          "token": {
+            "allowlist": false
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "/payment/amount",
+                "max": "5"
+              },
+              {
+                "argument": "fee",
+                "max": "0.5"
+              }
+            ]
+          },
+          "send_token": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "contract_address",
+                "resource": "token"
+              },
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "10"
+              }
+            ]
+          }
+        }
+      },
+      "why": "allowlist must be true"
+    },
+    {
+      "id": "allowlist-with-owner",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          },
+          "token": {
+            "allowlist": true,
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "/payment/amount",
+                "max": "5"
+              },
+              {
+                "argument": "fee",
+                "max": "0.5"
+              }
+            ]
+          },
+          "send_token": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "contract_address",
+                "resource": "token"
+              },
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "10"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Exactly one form"
     }
   ],
   "invalid_ruleset_texts": [

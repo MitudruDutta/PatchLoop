@@ -21,7 +21,7 @@ MAX_SAFE_INTEGER = 2**53 - 1
 MAX_PARENT_LINKS = 4
 
 _TOP_KEYS = {"schema_version", "name", "version", "description", "resources", "tools"}
-_RESOURCE_KEYS = {"principal", "owner_field", "tenant_field", "parent"}
+_RESOURCE_KEYS = {"principal", "owner_field", "tenant_field", "parent", "allowlist"}
 _TOOL_KEYS = {"access", "effect", "consent", "description", "resources", "limits"}
 _LIMIT_KEYS = {"argument", "max"}
 _DECIMAL = re.compile(r"-?[0-9]+(\.[0-9]+)?")
@@ -142,9 +142,13 @@ def validate(data) -> None:
     for name, resource in resources.items():
         where = f"resource {name!r}"
         _object(resource, _RESOURCE_KEYS, where)
-        forms = ("principal" in resource) + ("parent" in resource) + bool({"owner_field", "tenant_field"} & set(resource))
-        _require(forms == 1, f"{where} must have exactly one of principal, parent, or owner_field/tenant_field")
+        forms = (("principal" in resource) + ("parent" in resource) + ("allowlist" in resource)
+                 + bool({"owner_field", "tenant_field"} & set(resource)))
+        _require(forms == 1, f"{where} must have exactly one of principal, parent, allowlist, or owner_field/tenant_field")
         _require(resource.get("principal", True) is True, f"{where}: principal must be true")
+        if "allowlist" in resource:
+            _require(resource["allowlist"] is True, f"{where}: allowlist must be true")
+            _require(data["schema_version"] == 2, f"{where}: allowlist resources need schema_version 2")
         for key in ("owner_field", "tenant_field"):
             if key in resource:
                 _text(resource[key], f"{where}.{key}")

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "name": "fhir-patient-assistant",
+  "version": "1",
+  "description": "A patient reads only their own records, through patient-scoped searches. The generic read and every write tool are not allowed.",
+  "resources": {
+    "patient": {"principal": true}
+  },
+  "tools": {
+    "get_capabilities": {"access": "public", "effect": "none"},
+    "search": {"access": "scoped", "effect": "none",
+               "resources": [{"argument": "/searchParam/patient", "resource": "patient"}]}
+  }
+}

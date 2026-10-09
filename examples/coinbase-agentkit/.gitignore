@@ -1,0 +1,10 @@
+# Written when you run the example. Never commit wallet.key, even for a testnet.
+wallet.key
+wallet_data_*.txt
+calls.jsonl
+find.json
+check.json
+rules.proposed.json
+rules.proposed.report.json
+trials.log
+tester-runs/
