@@ -12,11 +12,19 @@ license = { text = "MIT" }
 dependencies = []
 
 [project.optional-dependencies]
-# Framework adapters. Lower bounds are the versions the adapter tests run against.
+# Framework adapters, one extra each. Lower bounds are the versions the adapter tests ran against.
+# Some frameworks pin conflicting dependencies, so CI installs each extra in its own job.
 fastmcp = ["fastmcp>=3.1"]
 langchain = ["langchain>=1.2", "langgraph>=1.1"]
 strands = ["strands-agents>=1.26"]
-dev = ["pytest>=8", "jsonschema>=4", "patchloop[fastmcp,langchain,strands]"]
+openai-agents = ["openai-agents>=0.20"]
+claude-agent-sdk = ["claude-agent-sdk>=0.2.164"]
+google-adk = ["google-adk>=1.26"]
+llamaindex = ["llama-index-core>=0.14.25"]
+pydantic-ai = ["pydantic-ai-slim>=2.54"]
+crewai = ["crewai>=1.15.25"]
+mcp = ["mcp>=1.26"]
+dev = ["pytest>=8", "jsonschema>=4"]
 
 [project.scripts]
 patchloop = "patchloop.cli:main"

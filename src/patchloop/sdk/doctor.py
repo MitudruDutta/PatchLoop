@@ -1,23 +1,28 @@
-"""Check a PatchLoop setup: `patchloop doctor myapp.agent` or `patchloop doctor myapp.agent:guard`."""
+"""Check a PatchLoop setup: `patchloop doctor myapp.agent` or `patchloop doctor myapp.agent:guard`.
+
+The module either has a `guard` attribute (a PatchLoop) or calls patchloop.init(). When its tools are
+protected through an adapter, give the module a TOOLS catalog so that doctor can check them too.
+"""
 
 import argparse
-import importlib
-import sys
 
-from patchloop.sdk import runtime
+from patchloop.loop import catalog
+from patchloop.sdk.runtime import PatchLoop
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="patchloop doctor", description=__doc__)
-    parser.add_argument("target", help="module that calls patchloop.init(), or module:attribute naming a PatchLoop")
+    parser = argparse.ArgumentParser(prog="patchloop doctor", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("target", help="module, or module:attribute naming a PatchLoop")
     options = parser.parse_args()
-    module_name, _, attribute = options.target.partition(":")
-    sys.path.insert(0, "")
-    module = importlib.import_module(module_name)
-    patchloop = getattr(module, attribute) if attribute else runtime.client()
-    problems = patchloop.doctor()
+    target = catalog.load_target(options.target)
+    patchloop = target if isinstance(target, PatchLoop) else catalog.guard_of(target)
+    rows = getattr(target, "TOOLS", None)
+    tools = {tool["name"]: sorted(catalog.parameter_names(tool)) for tool in catalog.normalize(rows)} if rows else None
+    problems = patchloop.doctor(tools)
     rules = patchloop.rules
-    print(f"rule set {rules.name}@{rules.version} ({rules.sha256[:12]}), {len(patchloop.registered)} registered tools")
+    print(f"rule set {rules.name}@{rules.version} ({rules.sha256[:12]}), "
+          f"{len(tools) if tools is not None else len(patchloop.registered)} tools checked")
     for problem in problems:
         print(f"  - {problem}")
     print("no problems found" if not problems else f"{len(problems)} problems")

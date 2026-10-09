@@ -30,8 +30,9 @@ class Scripted:
     def __init__(self, *answers):
         self.answers, self.requests = list(answers), []
 
-    def complete(self, messages, *, model, max_tokens, temperature):
+    def complete(self, messages, *, model, max_tokens, temperature, response_format=None):
         self.requests.append(messages)
+        self.formats = getattr(self, "formats", []) + [response_format]
         answer = self.answers.pop(0)
         if isinstance(answer, Exception):
             raise answer
@@ -201,11 +202,12 @@ def test_propose_keeps_recorded_allowed_calls_allowed(tmp_path):
 
 def test_propose_passes_guidance_as_untrusted_and_survives_search_failure():
     class Search:
-        def guidance(self):
+        def guidance(self, query):
+            assert query.startswith("OWASP authorization") and "ticket" in query and "help" in query
             return {"query": "q", "request_id": "t-1", "results": [{"url": "https://owasp.example/a", "content": "deny by default"}]}
 
     class Down:
-        def guidance(self):
+        def guidance(self, query):
             raise ProviderError("Provider HTTP 503")
 
     client = Scripted(json.dumps(RULES), json.dumps(RULES))
@@ -296,6 +298,17 @@ def test_tester_reports_blocked_calls_in_enforce_mode_and_stops_at_budget():
     assert report["summary"] == {"violation": 0, "blocked": 1, "possible_rule_gap": 0, "scenarios": 1}
 
 
+def test_guidance_query_ignores_framework_naming_noise():
+    tools = [{"name": "WalletActionProvider_native_transfer"}, {"name": "ERC20ActionProvider_get_balance"}]
+    assert propose.guidance_query(tools) == "OWASP authorization object level access control wallet erc20 balance ownership checks"
+
+
+def test_tester_goals_cover_unknown_destinations():
+    assert "unknown_destination" in tester.GOALS
+    assert "unknown_destination" in tester.PLAN_FORMAT["json_schema"]["schema"]["properties"]["scenarios"]["items"][
+        "properties"]["goal"]["enum"]
+
+
 def test_tester_retries_an_invalid_plan_and_validates_users():
     target, _ = make_target()
     bad = json.dumps({"scenarios": [{"goal": "cross_user", "user": None, "opening": "hi"},
@@ -338,3 +351,47 @@ def test_replay_reports_fields_the_old_rules_never_read(tmp_path):
     result = replay.replay((tmp_path / "calls.jsonl").read_text().splitlines(), Ruleset(RULES))
     assert result["counts"]["not_replayable"] == 1
     assert result["not_replayable"][0]["why"] == "ticket 'T1': tenant not recorded"
+
+
+def test_provider_features_structured_output_role_models_query_and_usage(monkeypatch):
+    from patchloop import providers
+    assert propose.guidance_query(tools_catalog(), "Each organization sees only its own tickets.") == (
+        "OWASP authorization object level access control ticket help multi-tenant ownership checks")
+    client = Scripted(json.dumps(RULES))
+    report = propose.propose(tools_catalog(), client=client, model="nvidia/nemotron")
+    assert client.formats == [{"type": "json_object"}] and report["usage"]["total_tokens"] == 10
+    target, _ = make_target()
+    client = Scripted(PLAN, "DONE", json.dumps({"suspected": False, "evidence": "", "tools": []}), "DONE",
+                      json.dumps({"suspected": False, "evidence": "", "tools": []}))
+    models = {"plan": "nvidia/nemotron-big", "customer": "nvidia/nemotron-nano", "judge": "nvidia/nemotron-big"}
+    report = tester.run_tests(target, client=client, model=models, scenarios=2, turns=2)
+    assert [f["json_schema"]["name"] if f else None for f in client.formats] == [
+        "test_plan", None, "verdict", None, "verdict"]
+    assert [r["model"] for r in report["requests"]][:2] == ["nvidia/nemotron-big", "nvidia/nemotron-nano"]
+    assert report["usage"]["total_tokens"] == 50
+    monkeypatch.setenv("NEBIUS_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+    monkeypatch.setenv("NEBIUS_MODEL_CUSTOMER", "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B")
+    assert providers.nemotron_model("customer") == "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
+    assert providers.nemotron_model("judge") == "nvidia/nemotron-3-super-120b-a12b"
+    monkeypatch.setenv("NEBIUS_MODEL_JUDGE", "meta/llama")
+    with pytest.raises(ProviderError):
+        providers.nemotron_model("judge")
+
+
+def test_adapter_targets_supply_tools_for_test_propose_and_doctor(tmp_path, monkeypatch, capsys):
+    from patchloop.sdk import doctor
+    (tmp_path / "hooked_target.py").write_text(
+        "from patchloop import PatchLoop, Ruleset\n"
+        f"guard = PatchLoop(Ruleset({RULES!r}), facts=lambda r, i: None, mode='enforce')\n"
+        "TOOLS = [{'type': 'function', 'function': {'name': 'get_ticket', 'description': 'Read a ticket',\n"
+        "          'parameters': {'type': 'object', 'properties': {'id': {'type': 'string'}}}}},\n"
+        "         {'name': 'export_all', 'inputSchema': {'type': 'object', 'properties': {}}}]\n")
+    monkeypatch.chdir(tmp_path)
+    target = catalog.load_target("hooked_target")
+    assert [tool["name"] for tool in catalog.tools_of(target)] == ["get_ticket", "export_all"]
+    monkeypatch.setattr("sys.argv", ["patchloop doctor", "hooked_target"])
+    assert doctor.main() == 1
+    out = capsys.readouterr().out
+    assert "2 tools checked" in out
+    assert "export_all: not in the rule set" in out
+    assert "get_ticket: binding argument 'ticket_id' is not a parameter" in out

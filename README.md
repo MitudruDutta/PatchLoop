@@ -2,17 +2,17 @@
 
 PatchLoop puts authorization rules at the tool boundary of an AI agent. The agent's model chooses tool names and arguments. Your application, not the model, says who is logged in, who owns which record, and whether the user confirmed an action. PatchLoop checks every tool call against a declarative rule set, records the decision, and in enforce mode blocks the call before the tool runs.
 
-It works with any agent framework: wrap plain Python tools with a decorator, or add one adapter to FastMCP, LangChain, LangGraph or Strands.
+It works with any agent framework: wrap plain Python tools with a decorator, or call `patchloop.wrap()` on your framework object. Adapters exist for FastMCP, MCP clients, LangChain, LangGraph, Strands, the OpenAI Agents SDK, the Claude Agent SDK, Google ADK, LlamaIndex, Pydantic AI and CrewAI.
 
 **Status (8 October 2026):** version 0.1 in development. The rule engine, the Python SDK runtime, framework adapters, recordings, `patchloop report`, `patchloop doctor`, the language-neutral specification, and the find, fix and prove loop (`patchloop test`, `propose`, `replay`) are implemented and tested. The hosted control plane, the TypeScript SDK and more adapters are next.
 
 ## Install
 
-Python 3.10 or later. The core SDK uses only the standard library. Adapters are extras.
+Python 3.10 or later. The core SDK uses only the standard library. Each adapter is an extra: `fastmcp`, `mcp`, `langchain`, `strands`, `openai-agents`, `claude-agent-sdk`, `google-adk`, `llamaindex`, `pydantic-ai`, `crewai`. Some frameworks pin conflicting dependencies, so install only the ones you use.
 
 ```bash
-python -m pip install -e '.[dev]'          # everything, for development
-python -m pip install -e '.[langchain]'    # or: fastmcp, strands
+python -m pip install -e '.[dev]'               # core and tests
+python -m pip install -e '.[dev,langchain]'     # plus one adapter's framework
 python -m pytest -q
 ```
 
@@ -73,27 +73,30 @@ Give the wrapped functions to your agent framework as usual. Async tools and asy
 
 ## Framework adapters
 
-One adapter protects every tool the framework runs, including tools you forgot to list in the rule set (they are never allowed). A blocked call returns the refusal text to the model as a tool error, so the agent keeps running.
+One adapter protects every tool the framework runs, including tools you forgot to list in the rule set (they are never allowed). A blocked call returns the refusal text to the model as a tool error, so the agent keeps running. The simplest way is `patchloop.wrap()`, which picks the adapter:
 
 ```python
-# FastMCP: every tool on the server
-from patchloop.integrations.fastmcp import PatchLoopMiddleware
-mcp = FastMCP("notes", middleware=[PatchLoopMiddleware()])
-
-# LangChain v1 agents
-from patchloop.integrations.langchain import PatchLoopMiddleware
-agent = create_agent(model, tools, middleware=[PatchLoopMiddleware()])
-
-# LangGraph
-from patchloop.integrations.langchain import wrap_tool_call, awrap_tool_call
-node = ToolNode(tools, wrap_tool_call=wrap_tool_call, awrap_tool_call=awrap_tool_call)
-
-# Strands Agents
-from patchloop.integrations.strands import PatchLoopHooks
-agent = Agent(model=model, tools=tools, hooks=[PatchLoopHooks()])
+mcp = patchloop.wrap(FastMCP("notes"))         # FastMCP server: middleware added
+agent = patchloop.wrap(Agent(...))             # Strands, Google ADK or OpenAI Agents SDK agent
+tools = patchloop.wrap([tool_a, tool_b])       # functions, LlamaIndex tools
+session = patchloop.wrap(client_session)       # MCP ClientSession: calls to servers you do not run
 ```
 
-Put the adapter last among middleware or hooks, so it checks the arguments the tool will receive.
+| Framework | Explicit form | How a call is checked |
+|---|---|---|
+| FastMCP | `FastMCP(..., middleware=[PatchLoopMiddleware()])` | Server middleware, before every tool |
+| MCP clients | `protect_session(session)` | Before the request leaves for the server |
+| LangChain v1 | `create_agent(..., middleware=[PatchLoopMiddleware()])` | `wrap_tool_call` middleware |
+| LangGraph | `ToolNode(tools, wrap_tool_call=wrap_tool_call, awrap_tool_call=awrap_tool_call)` | ToolNode wrapper |
+| Strands | `Agent(..., hooks=[PatchLoopHooks()])` | `BeforeToolCallEvent` cancels the call |
+| OpenAI Agents SDK | `protect(agent)` | Each function tool's invocation is wrapped. Hosted tools run at OpenAI and are not covered |
+| Claude Agent SDK | `ClaudeAgentOptions(hooks=PatchLoopHooks().hooks())` | `PreToolUse` hook denies; it also gates built-in tools such as Bash, so list the ones you allow |
+| Google ADK | `protect(agent)` | `before_tool_callback` skips the tool |
+| LlamaIndex | `protect_tools([...])` | Wrapped tools with the same name and schema |
+| Pydantic AI | `Agent(..., toolsets=[PatchLoopToolset(toolset)])` | Toolset wrapper |
+| CrewAI | `patchloop.integrations.crewai.install()` | Global tool hooks. CrewAI ignores errors raised in hooks, so this adapter blocks on any error itself |
+
+Each adapter lives in `patchloop.integrations.<framework>` and is tested inside the real framework. Put the adapter last among middleware or hooks, so it checks the arguments the tool will receive.
 
 ## What PatchLoop needs from your application
 
@@ -132,12 +135,15 @@ Tools behind an adapter are not wrapped by PatchLoop; pass them to `patchloop.do
 
 Three commands close the loop. `test` and `propose` call an NVIDIA Nemotron model on [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (set `NEBIUS_API_KEY` and `NEBIUS_MODEL`); `propose` also reads public guidance through [Tavily](https://docs.tavily.com/) (`TAVILY_API_KEY`). These are paid requests. `replay` makes none.
 
+Each role can use its own Nemotron model: `NEBIUS_MODEL_PROPOSER`, `NEBIUS_MODEL_PLANNER`, `NEBIUS_MODEL_CUSTOMER` and `NEBIUS_MODEL_JUDGE`, each falling back to `NEBIUS_MODEL`. A small model such as Nemotron Nano is enough for the customer; keep a larger one for proposing and judging. Plans, verdicts and drafts use Token Factory's JSON output, and every report includes token totals.
+
 **Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Point it at a module that provides:
 
 ```python
 guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
 USERS = [{"subject": "ada", "tenant": "acme"}, {"subject": "bo", "tenant": "acme"}]
 NOTES = "Ticket T1 belongs to ada, T2 to bo."                     # optional, helps the tester and judge
+TOOLS = [...]   # optional tool catalog (OpenAI function format); needed when an adapter protects the tools
 
 def agent(message: str, history: list[dict]) -> str: ...        # one turn of your agent
 def reset(): ...                                                  # optional: restore test data
@@ -149,7 +155,7 @@ patchloop test myapp.test_target --scenarios 3 --turns 4 --report find.json
 
 Use test data only: outside enforce mode, the agent's tools really run.
 
-**Fix: `patchloop propose`.** Nemotron drafts a rule set from the tool catalog, record samples, your policy text, the current rules and the tester's findings. Each draft is checked against the specification, the catalog and the samples, and the problems go back to the model. Nothing is activated: you review the draft.
+**Fix: `patchloop propose`.** Nemotron drafts a rule set from the tool catalog, record samples, your policy text, the current rules, the tester's findings and OWASP guidance that Tavily finds for the records your tools touch. Each draft is checked against the specification, the catalog and the samples, and the problems go back to the model. Nothing is activated: you review the draft.
 
 ```bash
 patchloop propose --target myapp.test_target --samples samples.json --policy policy.md \
@@ -208,7 +214,7 @@ src/patchloop/
   sdk/report.py       `patchloop report`
   sdk/doctor.py       `patchloop doctor`
   loop/               `patchloop test`, `propose` and `replay`: the find, fix and prove loop
-  integrations/       FastMCP, LangChain/LangGraph and Strands adapters
+  integrations/       Framework adapters and patchloop.wrap()
   sandbox/            Isolated execution of generated functions
   providers.py        Nebius Token Factory and Tavily clients
   cli.py              The `patchloop` command
