@@ -3,7 +3,7 @@
     from patchloop.integrations.openai_agents import protect
     agent = protect(Agent(name="support", tools=[get_ticket, close_ticket]))
 
-A blocked call is not run and the model receives the uniform refusal text as the tool output.
+A blocked call is not run and the model receives PatchLoop's message as the tool output.
 Only function tools run in your process, so only they are covered. Hosted tools (web search,
 file search, code interpreter) run at OpenAI. For tools from MCP servers, protect the server
 (FastMCP middleware) or the client session (patchloop.integrations.mcp).
@@ -14,7 +14,7 @@ import json
 
 from agents import FunctionTool
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
 def protect_tool(tool: FunctionTool, patchloop=None) -> FunctionTool:
@@ -29,8 +29,8 @@ def protect_tool(tool: FunctionTool, patchloop=None) -> FunctionTool:
             arguments = {}  # nothing to check against; scoped tools then deny as missing_argument
         try:
             return await (patchloop or client()).arun(tool.name, arguments, lambda: original(context, input_json))
-        except Blocked:
-            return REFUSAL
+        except Blocked as blocked:
+            return str(blocked)
 
     return dataclasses.replace(tool, on_invoke_tool=on_invoke_tool)
 

@@ -3,13 +3,13 @@
     from patchloop.integrations.google_adk import protect
     agent = protect(Agent(name="support", model=..., tools=[...]))
 
-A blocked call is skipped and the model receives {"error": <uniform refusal text>} as the tool
+A blocked call is skipped and the model receives {"error": <PatchLoop's message>} as the tool
 result. protect() appends the callbacks after any callbacks the agent already has, so that the
 check sees the final arguments; a callback that returns a result earlier skips the tool anyway.
 Facts may be async.
 """
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
 def _as_list(value):
@@ -24,8 +24,8 @@ class PatchLoopCallbacks:
     async def before_tool(self, tool, args, tool_context):
         try:
             self._admitted[tool_context.function_call_id] = await (self.patchloop or client()).abegin(tool.name, dict(args))
-        except Blocked:
-            return {"error": REFUSAL}
+        except Blocked as blocked:
+            return {"error": str(blocked)}
         return None
 
     async def after_tool(self, tool, args, tool_context, tool_response):

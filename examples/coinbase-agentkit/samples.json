@@ -1,0 +1,4 @@
+{
+  "recipient": {"user_id": "alice", "label": "Alice's savings"},
+  "token": {"symbol": "USDC", "network": "base-sepolia"}
+}

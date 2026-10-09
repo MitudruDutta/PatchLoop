@@ -3,7 +3,7 @@
     from patchloop.integrations.claude_agent_sdk import PatchLoopHooks
     options = ClaudeAgentOptions(hooks=PatchLoopHooks().hooks(), ...)
 
-A blocked call is denied with the uniform refusal text. Hooks are used rather than
+A blocked call is denied with PatchLoop's message for the model. Hooks are used rather than
 can_use_tool because the SDK skips can_use_tool for tools in allowed_tools and under
 bypassPermissions. Every tool reaches the rule set, including built-in tools such as Bash
 and Read, and MCP tools under their full names (mcp__<server>__<tool>); list the ones the
@@ -13,7 +13,7 @@ creates the client or calls query(), so the hooks see the user.
 
 from claude_agent_sdk import HookMatcher
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
 class PatchLoopHooks:
@@ -30,9 +30,9 @@ class PatchLoopHooks:
         try:
             self._admitted[hook_input["tool_use_id"]] = await (self.patchloop or client()).abegin(
                 self.name(hook_input["tool_name"]), dict(hook_input.get("tool_input") or {}))
-        except Blocked:
+        except Blocked as blocked:
             return {"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
-                                           "permissionDecisionReason": REFUSAL}}
+                                           "permissionDecisionReason": str(blocked)}}
         return {}
 
     async def post_tool_use(self, hook_input, tool_use_id, context):

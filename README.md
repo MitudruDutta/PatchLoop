@@ -104,7 +104,7 @@ Each adapter lives in `patchloop.integrations.<framework>` and is tested inside 
 |---|---|
 | Who is logged in | `with patchloop.identify(subject, tenant):` around each request or task, or pass `identity=` to `init()` |
 | Who owns a record | `facts(resource, id)` returns the record as a dict, or `None` when it does not exist. Raise when the lookup cannot answer: the decision is then `indeterminate`. |
-| What the user confirmed | `patchloop.confirm(tool, arguments)` when the user says yes to an exact action. A grant is used up by one call, expires after 10 minutes, and is bound to the user, the arguments and the rule set. For several processes, pass `consents=` an object with atomic `grant`, `has` and `take` backed by shared storage. |
+| What the user confirmed | `patchloop.confirm(tool, arguments)` when the user says yes to an exact action. A grant is used up by one call, expires after 10 minutes, and is bound to the user, the arguments and the rule set. To ask the user, pass `on_consent_required=handler` to `init()`: when a call lacks only confirmation, PatchLoop calls `handler(tool, arguments, principal)` with the exact arguments, and you later call `confirm(tool, arguments, principal=principal)`, also from another request. For several processes, pass `consents=` an object with atomic `grant`, `has` and `take` backed by shared storage. |
 
 `identify()` uses a context variable. asyncio tasks and frameworks that copy the context into worker threads (LangChain, LangGraph) see it. A bare `threading.Thread` does not: call `identify()` inside the thread.
 
@@ -118,7 +118,7 @@ Each adapter lives in `patchloop.integrations.<framework>` and is tested inside 
 
 Override per tool with `modes={"delete_note": "enforce"}`. `patchloop.check(tool, arguments)` returns a decision without running, recording or using up consent.
 
-The model always gets the same text for a blocked call: `This action is not permitted.` The reason (`not_owner`, `resource_missing`, ...) goes only to `Blocked.decision` and the recordings, so the model cannot learn which records exist.
+The model gets one of two texts for a blocked call. `This action needs the user's confirmation.` means every other check passed and only consent is missing, so the agent can ask the user. `This action is not permitted.` covers every other reason. The reason (`not_owner`, `resource_missing`, `over_limit`, ...) goes only to `Blocked.decision` and the recordings, so the model cannot learn which records exist.
 
 ## Doctor
 
@@ -131,13 +131,17 @@ patchloop doctor myapp.agent:guard     # or a PatchLoop instance
 
 Tools behind an adapter are not wrapped by PatchLoop; pass them to `patchloop.doctor(tools={"name": function_or_parameter_list})`.
 
+## Try it on a real agent
+
+[docs/guides/coinbase-agentkit.md](docs/guides/coinbase-agentkit.md) walks through every step on an open-source Coinbase AgentKit wallet agent, and [examples/coinbase-agentkit](examples/coinbase-agentkit/) holds the finished files and the results of repeated trials: rules, facts, the Strands adapter, `doctor`, observe and enforce, consent, and the find, fix and prove loop with Nemotron and Tavily.
+
 ## Find, fix and prove
 
 Three commands close the loop. `test` and `propose` call an NVIDIA Nemotron model on [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (set `NEBIUS_API_KEY` and `NEBIUS_MODEL`); `propose` also reads public guidance through [Tavily](https://docs.tavily.com/) (`TAVILY_API_KEY`). These are paid requests. `replay` makes none.
 
 Each role can use its own Nemotron model: `NEBIUS_MODEL_PROPOSER`, `NEBIUS_MODEL_PLANNER`, `NEBIUS_MODEL_CUSTOMER` and `NEBIUS_MODEL_JUDGE`, each falling back to `NEBIUS_MODEL`. A small model such as Nemotron Nano is enough for the customer; keep a larger one for proposing and judging. Plans, verdicts and drafts use Token Factory's JSON output, and every report includes token totals.
 
-**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Point it at a module that provides:
+**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A call that changed, sent or paid something without the user's consent is an unconfirmed effect, read from the rule set itself. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Treat these as leads to review, not verdicts. Point it at a module that provides:
 
 ```python
 guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
@@ -170,7 +174,7 @@ patchloop replay calls.jsonl --rules rules.proposed.json --facts myapp.test_targ
 
 ## Rule sets
 
-A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
+A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. Rule format version 2 adds amount limits, `"limits": [{"argument": "amount", "max": "0.01"}]`, which deny a call whose amount is greater (compared as exact decimals), and allowlist resources, `{"allowlist": true}`, for approved items such as tokens or domains. How to write a rule set for your agent, and what to keep in mind: [docs/guides/writing-rules.md](docs/guides/writing-rules.md). The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
 
 ## Reports
 

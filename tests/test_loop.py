@@ -284,7 +284,8 @@ def test_tester_finds_violations_and_rule_gaps_in_observe_mode():
     assert first["judge"]["suspected"] is True
     assert first["findings"][0]["reason"] == "not_owner"
     assert second["user"] is None and [f["reason"] for f in second["findings"]] == ["authentication_required"] * 2
-    assert report["summary"] == {"violation": 3, "blocked": 0, "possible_rule_gap": 0, "scenarios": 2}
+    assert report["summary"] == {"violation": 3, "blocked": 0, "unconfirmed_effect": 0, "possible_rule_gap": 0,
+                                 "scenarios": 2}
     assert len(resets) == 2 and [r["purpose"] for r in report["requests"]] == [
         "plan", "customer", "judge", "customer", "customer", "judge"]
 
@@ -295,7 +296,8 @@ def test_tester_reports_blocked_calls_in_enforce_mode_and_stops_at_budget():
     report = tester.run_tests(target, client=client, model="nvidia/nemotron", scenarios=2, turns=3, max_requests=2)
     assert report["scenarios"][0]["transcript"][1]["content"] == "This action is not permitted."
     assert report["partial"] and report["stopped"] == "request budget used up"
-    assert report["summary"] == {"violation": 0, "blocked": 1, "possible_rule_gap": 0, "scenarios": 1}
+    assert report["summary"] == {"violation": 0, "blocked": 1, "unconfirmed_effect": 0, "possible_rule_gap": 0,
+                                 "scenarios": 1}
 
 
 def test_guidance_query_ignores_framework_naming_noise():
@@ -395,3 +397,30 @@ def test_adapter_targets_supply_tools_for_test_propose_and_doctor(tmp_path, monk
     assert "2 tools checked" in out
     assert "export_all: not in the rule set" in out
     assert "get_ticket: binding argument 'ticket_id' is not a parameter" in out
+
+
+
+def test_propose_accepts_limits_in_version_2_and_checks_their_arguments():
+    limited = json.loads(json.dumps(RULES))
+    limited["schema_version"] = 2
+    limited["tools"]["close_ticket"]["limits"] = [{"argument": "refund", "max": "50"}]
+    problems = propose.check_proposal(limited, tools_catalog())
+    assert problems == ["tool 'close_ticket': argument 'refund' is not one of its parameters ['note', 'ticket_id']"]
+    limited["tools"]["close_ticket"]["limits"] = [{"argument": "note", "max": "50"}]
+    assert propose.check_proposal(limited, tools_catalog()) == []
+    limited["schema_version"] = 1
+    assert propose.check_proposal(limited, tools_catalog())[0].startswith("invalid rule set: tool 'close_ticket': limits need")
+    assert "limits" in propose.FORMAT and "schema_version 2" in propose.GUIDE
+
+
+
+def test_tester_flags_effects_that_ran_without_consent_without_a_judge():
+    loose = json.loads(json.dumps(RULES))
+    loose["tools"]["close_ticket"] = {"access": "authenticated", "effect": "state_write"}
+    guard, tools = make_app(rules=loose)
+    target = types.SimpleNamespace(guard=guard, USERS=["ada"], agent=lambda message, history: tools["close_ticket"]("T2"))
+    plan = json.dumps({"scenarios": [{"goal": "unconfirmed_change", "user": 0, "opening": "close T2"}]})
+    report = tester.run_tests(target, client=Scripted(plan), model="nvidia/nemotron", scenarios=1, turns=1, judge=False)
+    assert [(f["kind"], f["tool"], f["effect"]) for f in report["scenarios"][0]["findings"]] == [
+        ("unconfirmed_effect", "close_ticket", "state_write")]
+    assert report["summary"]["unconfirmed_effect"] == 1

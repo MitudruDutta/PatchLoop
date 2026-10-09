@@ -30,6 +30,7 @@ from .rules import Decision, Ruleset, is_identifier, principal_of
 log = logging.getLogger("patchloop")
 MODES = ("observe", "warn", "enforce")
 REFUSAL = "This action is not permitted."
+CONSENT_NEEDED = "This action needs the user's confirmation."
 
 try:
     SDK = f"python/{metadata.version('patchloop')}"
@@ -58,12 +59,13 @@ def identify(subject, tenant=None):
 class Blocked(PermissionError):
     """Raised in enforce mode when a call is not allowed. The tool did not run.
 
-    str(exc) is the same refusal text for every reason, so it is safe to show the model.
-    exc.decision holds the reason and lookups for the host.
+    str(exc) is safe to show the model: CONSENT_NEEDED when only the user's confirmation is missing
+    (every other check passed), else REFUSAL for every reason. exc.decision holds the reason and
+    lookups for the host.
     """
 
     def __init__(self, decision: Decision):
-        super().__init__(REFUSAL)
+        super().__init__(CONSENT_NEEDED if decision.reason == "consent_required" else REFUSAL)
         self.decision = decision
 
 
@@ -115,13 +117,17 @@ class PatchLoop:
 
     Modes: "observe" runs every call and records the decision; "warn" also logs and calls
     on_violation; "enforce" runs only allowed calls and raises Blocked for the rest.
-    Recordings keep the arguments the rule set uses, plus identifier values of arguments named like
+
+    on_consent_required(tool, arguments, principal) is called when enforce mode holds a call back only
+    because the user has not confirmed it. It receives the exact arguments, which recordings may redact,
+    so the host can ask the user and then call confirm() with the same arguments.
+    Recordings keep the arguments the rule set binds or limits, plus identifier values of arguments named like
     identifiers (id, ticket_id, ticket_ids, ticketId), so a later rule set can be replayed; every other
     value is "[redacted]" unless `redact` says otherwise.
     """
 
     def __init__(self, rules, *, facts, identity=None, mode="observe", modes=None, recordings=None,
-                 redact=None, on_violation=None, consents=None):
+                 redact=None, on_violation=None, on_consent_required=None, consents=None):
         self.rules = rules if isinstance(rules, Ruleset) else Ruleset.load(rules)
         self.mode, self.modes = mode, dict(modes or {})
         for value in (mode, *self.modes.values()):
@@ -132,6 +138,7 @@ class PatchLoop:
         self.recordings = Path(recordings) if recordings else None
         self.redact = redact or self._bound_arguments
         self.on_violation = on_violation
+        self.on_consent_required = on_consent_required
         self.consents = consents or ConsentLedger()
         self.registered = {}
         self._signatures = {}
@@ -218,11 +225,15 @@ class PatchLoop:
 
     # Consent
 
-    def confirm(self, tool: str, arguments: dict, *, ttl: float | None = None):
-        """Record that the logged-in user said yes to this exact call. The grant is used up by one call."""
-        principal = principal_of(self.identity())
+    def confirm(self, tool: str, arguments: dict, *, ttl: float | None = None, principal=None):
+        """Record that the user said yes to this exact call. The grant is used up by one call.
+
+        The user is the logged-in one, or `principal` when the host confirms later, outside the
+        request that was held back (for example from an on_consent_required handler).
+        """
+        principal = principal_of(principal if principal is not None else self.identity())
         if principal is None:
-            raise ValueError("confirm() needs a logged-in user; call it inside patchloop.identify()")
+            raise ValueError("confirm() needs a user; call it inside patchloop.identify() or pass principal=")
         if tool in self._signatures:
             arguments = _arguments(self._signatures[tool], (), arguments)
         self.consents.grant(self._consent_key(tool, arguments, principal), ttl)
@@ -258,6 +269,11 @@ class PatchLoop:
                 self._notify(decision)
         if not runs:
             self._record(call, "blocked")
+            if decision.reason == "consent_required" and self.on_consent_required is not None:
+                try:
+                    self.on_consent_required(tool, arguments, principal)
+                except Exception:
+                    log.exception("on_consent_required hook failed")
             raise Blocked(decision)
         return call
 
@@ -305,7 +321,7 @@ class PatchLoop:
 
     def _bound_arguments(self, tool, arguments):
         rule = self.rules.tools.get(tool) or {}
-        keep = {_top_key(binding["argument"]) for binding in rule.get("resources", [])}
+        keep = {_top_key(item["argument"]) for item in [*rule.get("resources", []), *rule.get("limits", [])]}
 
         def identifiers(value):
             return is_identifier(value) or (isinstance(value, list) and all(map(is_identifier, value)))
@@ -371,8 +387,8 @@ def check(tool_name: str, arguments: dict) -> Decision:
     return client().check(tool_name, arguments)
 
 
-def confirm(tool_name: str, arguments: dict, *, ttl: float | None = None):
-    return client().confirm(tool_name, arguments, ttl=ttl)
+def confirm(tool_name: str, arguments: dict, *, ttl: float | None = None, principal=None):
+    return client().confirm(tool_name, arguments, ttl=ttl, principal=principal)
 
 
 def doctor(tools=None) -> list[str]:

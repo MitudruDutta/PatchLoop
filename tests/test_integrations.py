@@ -415,3 +415,30 @@ def test_wrap_picks_the_adapter_and_rejects_unknown_objects(tmp_path):
     fastmcp = pytest.importorskip("fastmcp")
     server = patchloop.wrap(fastmcp.FastMCP("x"), protect)
     assert any(type(m).__name__ == "PatchLoopMiddleware" for m in server.middleware)
+
+
+def test_adapters_tell_the_model_when_only_confirmation_is_missing(tmp_path):
+    pytest.importorskip("fastmcp")
+    from fastmcp import Client, FastMCP
+    from patchloop import CONSENT_NEEDED
+    from patchloop.integrations.fastmcp import PatchLoopMiddleware
+
+    rules = Ruleset({"schema_version": 1, "name": "t", "version": "1",
+                     "resources": {"ticket": {"owner_field": "owner"}},
+                     "tools": {"close_ticket": {"access": "scoped", "effect": "state_write", "consent": True,
+                                                "resources": [{"argument": "ticket_id", "resource": "ticket"}]}}})
+    guard = PatchLoop(rules, facts=lambda resource, identifier: TICKETS.get(identifier), mode="enforce")
+    server = FastMCP("helpdesk", middleware=[PatchLoopMiddleware(guard)])
+
+    @server.tool
+    def close_ticket(ticket_id: str) -> str:
+        return "closed"
+
+    async def main():
+        with identify("ada"):
+            async with Client(server) as client:
+                own = await client.call_tool("close_ticket", {"ticket_id": "1"}, raise_on_error=False)
+                other = await client.call_tool("close_ticket", {"ticket_id": "2"}, raise_on_error=False)
+                return own.content[0].text, other.content[0].text
+
+    assert asyncio.run(main()) == (CONSENT_NEEDED, REFUSAL)
