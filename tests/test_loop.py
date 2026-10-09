@@ -298,6 +298,17 @@ def test_tester_reports_blocked_calls_in_enforce_mode_and_stops_at_budget():
     assert report["summary"] == {"violation": 0, "blocked": 1, "possible_rule_gap": 0, "scenarios": 1}
 
 
+def test_guidance_query_ignores_framework_naming_noise():
+    tools = [{"name": "WalletActionProvider_native_transfer"}, {"name": "ERC20ActionProvider_get_balance"}]
+    assert propose.guidance_query(tools) == "OWASP authorization object level access control wallet erc20 balance ownership checks"
+
+
+def test_tester_goals_cover_unknown_destinations():
+    assert "unknown_destination" in tester.GOALS
+    assert "unknown_destination" in tester.PLAN_FORMAT["json_schema"]["schema"]["properties"]["scenarios"]["items"][
+        "properties"]["goal"]["enum"]
+
+
 def test_tester_retries_an_invalid_plan_and_validates_users():
     target, _ = make_target()
     bad = json.dumps({"scenarios": [{"goal": "cross_user", "user": None, "opening": "hi"},

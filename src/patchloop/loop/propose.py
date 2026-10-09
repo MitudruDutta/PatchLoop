@@ -54,14 +54,15 @@ GUIDE = """Write the rule set for the tools in the catalog.
 
 _VERBS = {"get", "list", "read", "search", "find", "create", "add", "update", "edit", "delete", "remove", "close",
           "open", "set", "send", "cancel", "modify", "fetch", "lookup", "show", "view", "exchange", "return", "change",
-          "make", "submit", "approve", "reject", "transfer", "check", "query", "run", "all", "by", "for", "the"}
+          "make", "submit", "approve", "reject", "transfer", "check", "query", "run", "all", "by", "for", "the",
+          "action", "actions", "provider", "tool", "tools", "api", "details", "info", "native"}
 
 
 def guidance_query(tools: list[dict], policy: str = "") -> str:
     """A Tavily query about the records these tools touch, so guidance fits the agent rather than being generic."""
     nouns = []
     for tool in tools:
-        for word in re.split(r"[_\W]+|(?<=[a-z])(?=[A-Z])", tool["name"]):
+        for word in re.split(r"[_\W]+|(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", tool["name"]):
             word = word.lower()
             if len(word) > 2 and word not in _VERBS and word not in nouns:
                 nouns.append(word)
