@@ -18,6 +18,6 @@ def test_unknown_command_prints_usage_and_fails(capsys):
 
 def test_subcommand_receives_its_own_arguments(monkeypatch):
     seen = {}
-    monkeypatch.setattr("patchloop.evaluation.replay.main", lambda: seen.setdefault("argv", __import__("sys").argv[:]) and 0)
-    cli.main(["replay", "--guarded"])
-    assert seen["argv"] == ["patchloop replay", "--guarded"]
+    monkeypatch.setattr("patchloop.sdk.report.main", lambda: seen.setdefault("argv", __import__("sys").argv[:]) and 0)
+    cli.main(["report", "calls.jsonl", "--json"])
+    assert seen["argv"] == ["patchloop report", "calls.jsonl", "--json"]

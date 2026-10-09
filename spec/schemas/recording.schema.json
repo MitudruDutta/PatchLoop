@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patchloop.dev/schemas/recording/v1",
+  "title": "PatchLoop recording line, version 1",
+  "description": "One JSON object per line in a recordings file. Written by an SDK for every intercepted tool call.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "recorded_at", "ruleset", "tool", "arguments", "principal", "consent",
+               "decision", "mode", "executed", "outcome"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "recorded_at": {"type": "string", "description": "UTC time, ISO 8601"},
+    "sdk": {"type": "string", "description": "SDK language and version, for example python/0.1.0"},
+    "ruleset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "sha256"],
+      "properties": {
+        "name": {"type": "string"},
+        "version": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "tool": {"type": "string"},
+    "arguments": {"type": "object", "description": "After the host application's redaction"},
+    "principal": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": false, "required": ["subject"],
+         "properties": {"subject": {"type": ["string", "integer"]}, "tenant": {"type": ["string", "integer", "null"]}}}
+      ]
+    },
+    "consent": {"type": "boolean"},
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "reason", "lookups"],
+      "properties": {
+        "decision": {"enum": ["allow", "deny", "indeterminate"]},
+        "reason": {"type": "string"},
+        "lookups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["resource", "id", "status"],
+            "properties": {
+              "resource": {"type": "string"},
+              "id": {"type": ["string", "integer"]},
+              "status": {"enum": ["found", "missing", "unavailable"]},
+              "owner": {},
+              "tenant": {},
+              "parent": {}
+            }
+          }
+        }
+      }
+    },
+    "mode": {"enum": ["observe", "warn", "enforce"]},
+    "executed": {"type": "boolean"},
+    "outcome": {"enum": ["ok", "error", "blocked"]},
+    "error": {"type": ["string", "null"], "description": "Exception type name only; never the message"}
+  }
+}

@@ -4,14 +4,11 @@ import importlib
 import sys
 
 COMMANDS = {
-    "replay": ("patchloop.evaluation.replay", "Replay the reference tasks; --guarded checks a guard"),
-    "demo": ("patchloop.evaluation.demo", "Offline before/after comparison with the reference guard"),
-    "campaign": ("patchloop.evaluation.campaign", "Run a live tester campaign or a find-repair-retest cycle"),
-    "compare": ("patchloop.evaluation.compare", "Compare repair strategies at matched budgets"),
-    "reproduce": ("patchloop.evaluation.reproduce", "Replay a downloaded reproduction bundle without model calls"),
-    "repair": ("patchloop.repair.loop", "Generate, validate and promote a guard; --verify checks a saved guard"),
-    "export": ("patchloop.repair.export", "Export an accepted guard as a reviewable patch"),
-    "dashboard": ("patchloop.dashboard", "Start the local dashboard"),
+    "report": ("patchloop.sdk.report", "Summarize SDK recordings by tool and decision"),
+    "doctor": ("patchloop.sdk.doctor", "Check a PatchLoop setup for gaps in protection"),
+    "test": ("patchloop.loop.tester", "Test an agent with a Nemotron tester and judge in a test environment"),
+    "propose": ("patchloop.loop.propose", "Draft a rule set with Nemotron and check it"),
+    "replay": ("patchloop.loop.replay", "Replay recorded calls against another rule set"),
     "providers": ("patchloop.providers", "Check model and search provider access"),
 }
 

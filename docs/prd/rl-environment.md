@@ -70,7 +70,7 @@ Full validation takes 50–80 seconds per candidate. GRPO needs many candidates 
 | Retail variants: subsets of rules, renamed fields, removed or added tools, different consent requirements | To build | Training diversity |
 | τ-bench airline (50 tasks; `send_certificate` can credit any user) | To vendor | Training or held-out |
 | τ²-bench retail, airline, telecom (2,285 telecom tasks) | To vendor (different framework) | Held-out transfer |
-| Agents that are not benchmarks, from the platform's generic integration | Later | Final transfer test |
+| Agents that are not benchmarks, through the [agent integration](agent-integration.md) Environment interface | After agent integration step 3 | Final transfer test |
 
 **Split rule:** split by environment lineage. Variants of one environment stay in one split. Hold out whole environments for transfer.
 
@@ -147,4 +147,4 @@ The NVIDIA recipe (2 nodes × 8 GPUs) is a candidate configuration, not a measur
 
 1. Does the first RL version train with single-step episodes only, or include feedback steps?
 2. Which environment is held out first: τ-bench airline or τ²-bench telecom?
-3. Can the platform's generic integration provide one non-benchmark agent for the final transfer test?
+3. Can the agent integration work (its requirement I6) provide one non-benchmark agent for the final transfer test?

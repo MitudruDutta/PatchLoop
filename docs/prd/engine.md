@@ -2,7 +2,7 @@
 
 ## Product requirements, architecture, and research protocol
 
-**Related PRDs:** [platform: SDK, API access, documentation website, organizations and pricing](platform.md); [RL environment](rl-environment.md).
+**Related PRDs:** [platform: SDK, API access, documentation website, organizations and pricing](platform.md); [RL environment](rl-environment.md); [agent integration: support any tool-using agent](agent-integration.md).
 
 **Status (updated 5 October 2026):** Native Nemotron conversations, adversarial testing, action-bound consent, a repair/retest loop, a local HTML dashboard and offline reproduction/review bundles are implemented. A live conversation and one small tester campaign completed. The original fixed-rule generated guard remains valid under the corrected gate. The richer adapter mode passes a full scripted-provider workflow, but six live candidates were rejected; none activated. The four-condition runner exists without measured live comparison results. Public hosting, AI Cloud deployment, independent final evaluation and RL remain pending. All 635 archive outcomes stay visible, including `test-64`; all 634 policy-consistent cases remain the preservation denominator. See [implementation status](../status/implementation.md), [current evidence](../evidence/local-product-2026-10-05.json) and [research weaknesses](../research/weaknesses.md).
 

@@ -1,171 +1,226 @@
 # PatchLoop
 
-PatchLoop is being built to turn failures in tool-using agents into generated guard patches, regression tests, and reviewable evidence.
+PatchLoop puts authorization rules at the tool boundary of an AI agent. The agent's model chooses tool names and arguments. Your application, not the model, says who is logged in, who owns which record, and whether the user confirmed an action. PatchLoop checks every tool call against a declarative rule set, records the decision, and in enforce mode blocks the call before the tool runs.
 
-**Status — 5 October 2026:** Local HTML dashboard, native Nemotron conversations, adversarial tester, action-bound consent, repair/retest loop and reproduction bundles are implemented. Live conversations and a small tester campaign completed on Nebius Token Factory. The original generated ownership guard passes current checks. Richer adapter repair works with a scripted test provider, but all six live adapter candidates were rejected and none activated. Public hosting, a measured four-condition study and RL remain pending. See [current evidence](docs/evidence/local-product-2026-10-05.json), [implementation status](docs/status/implementation.md) and [research weaknesses](docs/research/weaknesses.md).
+It works with any agent framework: wrap plain Python tools with a decorator, or add one adapter to FastMCP, LangChain, LangGraph or Strands.
 
-## Run locally
+**Status (8 October 2026):** version 0.1 in development. The rule engine, the Python SDK runtime, framework adapters, recordings, `patchloop report`, `patchloop doctor`, the language-neutral specification, and the find, fix and prove loop (`patchloop test`, `propose`, `replay`) are implemented and tested. The hosted control plane, the TypeScript SDK and more adapters are next.
 
-Linux, Python 3.10+, `/usr/bin/python3`, and **bubblewrap** (`bwrap`, user namespaces enabled). On Debian/Ubuntu: `sudo apt install bubblewrap`. Python runtime uses the standard library; tests require pytest. Candidate execution fails closed if isolation is unavailable.
+## Install
+
+Python 3.10 or later. The core SDK uses only the standard library. Adapters are extras.
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -e '.[dev]'          # everything, for development
+python -m pip install -e '.[langchain]'    # or: fastmcp, strands
 python -m pytest -q
-patchloop --help
-patchloop replay
-patchloop demo --output artifacts/reference-comparison.json
-patchloop replay --guarded
 ```
 
-The baseline reproduces 635 reference tasks with 1,375 scheduled calls. Guarded replay compares **outputs and final state** and applies the hash-bound utility manifest. It reports 634 matching tasks and the contained `test-64` identity conflict, then exits 0. An unexplained preservation failure, baseline mismatch, executed violation or added execution error still exits 1, including in the conflict case. All 635 outcomes remain visible: the task declares Harper while its lookup and subsequent actions concern James.
+## Quick start
 
-The offline demo compares two unauthorized attempts against the handwritten guard. Validate the actual saved model-generated candidate without API calls or activation:
+Describe your resources and tools in a rule set (`rules.json`):
+
+```json
+{
+  "schema_version": 1,
+  "name": "notes",
+  "version": "1",
+  "resources": {
+    "user": {"principal": true},
+    "note": {"owner_field": "owner_id", "tenant_field": "org_id"}
+  },
+  "tools": {
+    "search_help": {"access": "public", "effect": "none"},
+    "read_note": {"access": "scoped", "effect": "none",
+                  "resources": [{"argument": "note_id", "resource": "note"}]},
+    "delete_note": {"access": "scoped", "effect": "state_write", "consent": true,
+                    "resources": [{"argument": "note_id", "resource": "note"}]}
+  }
+}
+```
+
+Initialize once, protect the tools, and bind the logged-in user per request:
+
+```python
+import patchloop
+from patchloop import Blocked
+
+NOTES = {"n1": {"owner_id": "ada", "org_id": "acme", "text": "mine"},
+         "n2": {"owner_id": "bo", "org_id": "acme", "text": "not mine"}}
+
+patchloop.init("rules.json", facts=lambda resource, record_id: NOTES.get(record_id),
+               mode="enforce", recordings="calls.jsonl")
+
+@patchloop.tool
+def read_note(note_id: str) -> str:
+    return NOTES[note_id]["text"]
+
+@patchloop.tool
+def delete_note(note_id: str) -> str:
+    return NOTES.pop(note_id)["text"]
+
+with patchloop.identify(subject="ada", tenant="acme"):    # from your own login, never from the model
+    print(read_note("n1"))                                # allowed: ada owns n1
+    try:
+        read_note("n2")                                   # blocked: the reason is not_owner
+    except Blocked as blocked:
+        print(blocked)                                    # "This action is not permitted."
+    patchloop.confirm("delete_note", {"note_id": "n1"})  # the user said yes to this exact action
+    print(delete_note("n1"))                              # allowed once; the grant is used up
+```
+
+Give the wrapped functions to your agent framework as usual. Async tools and async `facts` work too.
+
+## Framework adapters
+
+One adapter protects every tool the framework runs, including tools you forgot to list in the rule set (they are never allowed). A blocked call returns the refusal text to the model as a tool error, so the agent keeps running.
+
+```python
+# FastMCP: every tool on the server
+from patchloop.integrations.fastmcp import PatchLoopMiddleware
+mcp = FastMCP("notes", middleware=[PatchLoopMiddleware()])
+
+# LangChain v1 agents
+from patchloop.integrations.langchain import PatchLoopMiddleware
+agent = create_agent(model, tools, middleware=[PatchLoopMiddleware()])
+
+# LangGraph
+from patchloop.integrations.langchain import wrap_tool_call, awrap_tool_call
+node = ToolNode(tools, wrap_tool_call=wrap_tool_call, awrap_tool_call=awrap_tool_call)
+
+# Strands Agents
+from patchloop.integrations.strands import PatchLoopHooks
+agent = Agent(model=model, tools=tools, hooks=[PatchLoopHooks()])
+```
+
+Put the adapter last among middleware or hooks, so it checks the arguments the tool will receive.
+
+## What PatchLoop needs from your application
+
+| Input | How |
+|---|---|
+| Who is logged in | `with patchloop.identify(subject, tenant):` around each request or task, or pass `identity=` to `init()` |
+| Who owns a record | `facts(resource, id)` returns the record as a dict, or `None` when it does not exist. Raise when the lookup cannot answer: the decision is then `indeterminate`. |
+| What the user confirmed | `patchloop.confirm(tool, arguments)` when the user says yes to an exact action. A grant is used up by one call, expires after 10 minutes, and is bound to the user, the arguments and the rule set. For several processes, pass `consents=` an object with atomic `grant`, `has` and `take` backed by shared storage. |
+
+`identify()` uses a context variable. asyncio tasks and frameworks that copy the context into worker threads (LangChain, LangGraph) see it. A bare `threading.Thread` does not: call `identify()` inside the thread.
+
+## Modes
+
+| Mode | Behavior |
+|---|---|
+| `observe` (default) | Runs every call and records the decision. Use it first, in production, to see what enforcement would change. |
+| `warn` | Also logs a warning and calls `on_violation(decision)` for each call that is not allowed |
+| `enforce` | Runs only allowed calls. Raises `Blocked` (a `PermissionError`) for the rest. |
+
+Override per tool with `modes={"delete_note": "enforce"}`. `patchloop.check(tool, arguments)` returns a decision without running, recording or using up consent.
+
+The model always gets the same text for a blocked call: `This action is not permitted.` The reason (`not_owner`, `resource_missing`, ...) goes only to `Blocked.decision` and the recordings, so the model cannot learn which records exist.
+
+## Doctor
+
+`patchloop doctor` finds setups that weaken protection without failing loudly: tools missing from the rule set, rule set entries that match no tool, bindings that name a parameter the tool does not have, state-changing tools without consent, and observe mode.
 
 ```bash
-patchloop repair --verify examples/guards/ownership.py
+patchloop doctor myapp.agent           # a module that calls patchloop.init()
+patchloop doctor myapp.agent:guard     # or a PatchLoop instance
 ```
 
-The candidate is copied unchanged from the model response. [Historical live evidence](docs/evidence/live-repair-2026-10-05.json) records request IDs, usage and source hash. Its original fixed-case gate was vulnerable to identity memorization and is superseded. Current verification adds per-run randomized development and sealed identity panels, actual tool-effect checks, and complete utility replay. This is one exploratory deterministic repair. Separate conversation evidence exists; no transfer study has been completed.
+Tools behind an adapter are not wrapped by PatchLoop; pass them to `patchloop.doctor(tools={"name": function_or_parameter_list})`.
 
-## Runtime integrations
+## Find, fix and prove
 
-Run the local product after exporting your provider variables:
+Three commands close the loop. `test` and `propose` call an NVIDIA Nemotron model on [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (set `NEBIUS_API_KEY` and `NEBIUS_MODEL`); `propose` also reads public guidance through [Tavily](https://docs.tavily.com/) (`TAVILY_API_KEY`). These are paid requests. `replay` makes none.
+
+**Find: `patchloop test`.** A Nemotron tester plans scenarios (another user's records, another organization's records, no sign-in, changes without confirmation) and plays a customer against your agent, in a test environment. Every tool call is decided by the rule set. A call the rules do not allow is a finding. A Nemotron judge then reads each conversation for access that the rules allowed but should not have: a possible rule gap. Point it at a module that provides:
+
+```python
+guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
+USERS = [{"subject": "ada", "tenant": "acme"}, {"subject": "bo", "tenant": "acme"}]
+NOTES = "Ticket T1 belongs to ada, T2 to bo."                     # optional, helps the tester and judge
+
+def agent(message: str, history: list[dict]) -> str: ...        # one turn of your agent
+def reset(): ...                                                  # optional: restore test data
+```
 
 ```bash
-patchloop dashboard --store artifacts/versions
-# Open http://127.0.0.1:8080
+patchloop test myapp.test_target --scenarios 3 --turns 4 --report find.json
 ```
 
-The dashboard shows conversations, actual record changes, and guard source/test results. "Challenge this version" runs one bounded scenario. Checking "Repair a finding and test again" starts a repair only when a complete campaign observes a violation. "Reproduce locally" downloads the exact run's guard, recorded input and observed effects; replay requires no model calls. With no keys, the page still displays the current source and explains configuration. The service binds to loopback, rejects foreign origins/hosts, limits sessions/jobs, serializes each conversation, and caps inference at 80 calls per server process. This is a local workspace, not a public tenant service.
+Use test data only: outside enforce mode, the agent's tools really run.
 
-The default `artifacts/product-versions` store starts with an explicitly labelled unrepaired baseline. `--store artifacts/versions` uses the previously generated fixed-rule guard; consent is independently enforced for that comparison. Conversations keep their initial guard even if a later job promotes another version. Keys remain in the Python orchestration process.
+**Fix: `patchloop propose`.** Nemotron drafts a rule set from the tool catalog, record samples, your policy text, the current rules and the tester's findings. Each draft is checked against the specification, the catalog and the samples, and the problems go back to the model. Nothing is activated: you review the draft.
 
 ```bash
-patchloop campaign challenge --reference --cases 1 --turns 1
-patchloop campaign challenge --baseline --cases 1 --turns 1
-patchloop campaign cycle --store artifacts/product-versions
+patchloop propose --target myapp.test_target --samples samples.json --policy policy.md \
+    --rules rules.json --findings find.json --recordings calls.jsonl --output rules.proposed.json
 ```
 
-These commands make paid runtime inference calls. A cycle has a shared 40-request budget, at most three customer challenges per scenario and three repair candidates. A zero-finding run is saved honestly; no fixed incident is substituted. Missing observations are marked partial/indeterminate. Large campaigns and public deployment remain a separate verification step.
-
-Optional browser checks use a scripted provider and make no paid requests:
+**Prove: `patchloop replay`.** Replays recorded calls against the draft and lists every call it would newly block or newly allow. It uses the lookups saved in the recordings. When the old rules never looked a record up, pass live facts. A call that cannot be replayed is reported as such, never guessed.
 
 ```bash
-python -m pip install playwright
-python -m playwright install chromium
-python scripts/check_dashboard_browser.py
+patchloop replay calls.jsonl --rules rules.proposed.json --facts myapp.test_target:guard.facts --fail-on newly_allowed
 ```
 
-For hosts where bubblewrap is unavailable, build the standalone candidate image and explicitly select Docker:
+## Rule sets
+
+A resource is the principal itself (`"principal": true`), a record with an owner and/or tenant field, or a child of another resource (`"parent": {"resource": "ticket", "field": "ticket_id"}`). A tool is `public`, `authenticated`, or `scoped` to one or more of its arguments. A nested argument is named with a JSON Pointer, for example `"/ticket/id"`. The full rules, including the evaluation order and every reason code, are in [spec/rule-semantics.md](spec/rule-semantics.md).
+
+## Reports
+
+Every call writes one JSON line to the recordings file. By default the recording keeps the arguments that the rule set uses, plus identifier values of arguments named like identifiers (`id`, `ticket_id`, `ticket_ids`, `ticketId`), so that a later rule set can be replayed. Every other value is replaced with `[redacted]`. Pass `redact=lambda tool, arguments: ...` to change that. An error is recorded by its exception type only, never its message.
+
+```bash
+patchloop report calls.jsonl            # calls, decisions and reasons per tool
+patchloop report calls.jsonl --json
+patchloop report calls.jsonl --strict   # exit 1 if any call was not allowed (for CI)
+```
+
+## Specification and other SDKs
+
+`spec/` is the contract for every SDK: the rule semantics, JSON schemas for rule sets and recordings, and conformance vectors. The TypeScript SDK must pass the same vectors. See [spec/README.md](spec/README.md).
+
+## Model providers
+
+`patchloop providers` checks access to [Nebius Token Factory](https://docs.tokenfactory.nebius.com/) (NVIDIA Nemotron models) and [Tavily Search](https://docs.tavily.com/), which `test` and `propose` use. Keys come from environment variables only; `.env.example` lists their names. Never commit keys.
+
+```bash
+patchloop providers models
+patchloop providers smoke
+```
+
+## Sandbox
+
+`patchloop.sandbox` runs one generated Python function, `allow(context)`, in an isolated bubblewrap namespace or a locked-down Docker container (no network, read-only root, no capabilities, non-root user, resource limits). Production enforcement does not use it: rule sets are data, evaluated in process. It exists for experiments with generated code.
 
 ```bash
 docker build -f docker/sandbox.Dockerfile -t patchloop-guard:local .
 PATCHLOOP_SANDBOX=docker python -m pytest -q tests/test_sandbox.py
-PATCHLOOP_SANDBOX=docker patchloop dashboard
 ```
-
-The candidate container has a read-only root, no shared-memory mount, no network, no capabilities, a non-root user and process/memory/CPU limits. Only the standalone worker enters its image; `.dockerignore` excludes keys, fixtures and project files. Cleanup removes timed-out workers. The trusted host owns Docker access; never mount the Docker socket into a publicly accessible frontend. AI Cloud deployment is deferred until the project configuration is available.
-
-Clients use [Nebius Token Factory's inference API](https://docs.tokenfactory.nebius.com/) and [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search). Configure keys in environment variables; do not commit them. `.env.example` lists required names. The application does not automatically load `.env` files.
-
-```bash
-patchloop providers models    # needs NEBIUS_API_KEY
-# Set NEBIUS_MODEL to an exact NVIDIA Nemotron ID returned by your catalog.
-patchloop providers smoke     # actual inference call; records model/id/usage
-patchloop providers guidance  # needs TAVILY_API_KEY; actual Tavily search
-```
-
-Both services were verified live. Integrated repair used `nvidia/nemotron-3-super-120b-a12b`, with three Tavily public references supplied as untrusted guidance. Generation used 4,821 prompt and 245 completion tokens. Retrieval's contribution to repair quality is unmeasured.
-
-```bash
-set -a
-source .env  # local ignored credentials, following .env.example
-set +a
-patchloop repair --attempts 3
-```
-
-The worker reproduces the incident, retrieves guidance, generates at most three candidates, validates outside the broker process, and activates only accepted source under a locked parent-version/interface check. Failed attempts retain evidence and usage. Contained versions are revalidated without inference/search. Use a new `--store artifacts/separate-versions` to explicitly start another experiment from baseline; this sends paid requests.
-
-`--interface adapter` supplies raw arguments, tool schemas, policy text, selected read-only rows and trusted consent metadata. It omits computed ownership/protection flags and does not provide the fixed-rule guard as an answer. The generated function chooses tool protection and record relationships. All six exploratory live candidates failed the gate; the gate was not weakened to accept them. `--interface fixed` retains the earlier contract-to-code comparison.
-
-The comparison runner freezes separate discovery/evaluation conversations and shares private panels, candidate limits and generation temperature across independent draws and feedback repair:
-
-```bash
-patchloop compare --cases 1 --turns 1 --attempts 2 --requests 80
-```
-
-It compares unrepaired, independent generation, feedback repair and handwritten enforcement. If discovery finds no complete incident, repair conditions are marked not run. Tokens/request IDs and unsuccessful repairs are retained; dollar costs stay unknown until provider prices/billing are supplied. The runner is implemented, but a measured live four-condition result has not been produced.
-
-Export accepted evidence for review without private cases or seeds:
-
-```bash
-patchloop export --guard examples/guards/ownership.py \
-  --validation artifacts/YOUR_VERIFICATION_RUN/validation.json \
-  --output artifacts/reviewable-patch
-```
-
-The bundle contains the exact source, an applicable source/evidence diff and a PR description. Export requires matching hashes, complete utility coverage and accepted development/sealed checks; it relies on trusted validation files. It does not independently prove model origin.
-
-Each run creates a private 32-byte random seed and freezes two disjoint identity panels using actual IDs from the synthetic fixture. Each panel covers all nine protected tools, authorized/cross-user/unauthenticated calls, unknown orders and public tools. The model receives aggregate development diagnostics only, never seeds, sealed diagnostics or archive conflict identities. Sealed checks run once on the first development-passing candidate; failure or incomplete execution ends the run without further model feedback. The private `security-seed` stays in ignored artifacts with permissions 0600. Panels share the public benchmark and owner-authored oracle; they do not establish independent-domain generalization.
-
-Traces, diffs, responses, guidance, validation and immutable versions remain under ignored `artifacts/`. Subsequent runs save exact provider request payloads without credentials; the first live run retained reconstructable inputs and response but did not save the payload separately. Tavily failure is recorded, never fabricated; required Nebius inference must succeed. No additional keys are needed locally.
-
-## Trust and scope
-
-The dispatcher gets identity from the first successful benchmark lookup and locks it for that conversation. A later lookup cannot replace it. Identity is not accepted from tool arguments. Reference replay explicitly seeds the task user because many recorded tasks omit login turns; this does not test authentication or consent in conversations.
-
-Benchmark lookup by email or name/ZIP is **not production authentication**. Anyone knowing those details can identify that fixture user. Consent requires the external user's exact "yes" after an exact proposal, expires after ten minutes, binds action/arguments/identity/version, and is consumed once. Model/tool text grants no permission. Recorded timestamps preserve expiry during offline replay. Adapter guards decide whether to enforce this trusted metadata; the independent evaluator records unconfirmed effects. Fixed-rule guards use separate handwritten consent enforcement. Duplicate operations, concurrency and broader business policy still need additional contracts.
-
-Generated Python runs in an isolated bubblewrap namespace or an explicitly selected Docker worker, without project/test/credential mounts or external network. Adapter mode receives selected synthetic fixture rows through JSON; it has no database write capability. The broker independently evaluates actual effects and utility; candidate output cannot supply validation scores. Resource limits bound execution. These finite tests do not establish readiness for arbitrary repository execution or public hosting.
-
-Replay batches decisions per task, reusing them only if the actual trusted context matches. Every context executes in a fresh child process and namespace, including fresh imported-module state. Randomized checks also exercise singleton calls, so behaving safely only in a batch is insufficient. Whole-database snapshots/hashes remain to detect unexpected mutations.
-
-**Repair scope:** fixed mode is a contract-to-code baseline: the broker selects protected tools and resolves ownership. Adapter mode removes those answers from its context, while preserving trusted identity, consent and independent effect checking. Its prototype works with scripted protocol fixtures; live generation has not yet produced an accepted adapter. Neither condition demonstrates general repair ability or superiority to direct enforcement.
-
-## Application and license
-
-The first application is derived from [Sierra's τ-bench retail environment](https://github.com/sierra-research/tau-bench), pinned in [NOTICE.md](src/patchloop/environments/tau_retail/NOTICE.md). Its prompt-only policy rules are an intentional benchmark design. This project modifies its own wrapper, preserves the vendored source/data, and makes no vulnerability claim against Sierra.
-
-Original project code: [MIT](LICENSE). Vendored source: [Sierra MIT license](src/patchloop/environments/tau_retail/LICENSE.sierra).
 
 ## Repository layout
 
 ```
-src/patchloop/              The engine and SDK (pip package "patchloop")
-  cli.py                    The `patchloop` command
-  providers.py              Nebius Token Factory and Tavily clients
-  runtime/                  Trusted tool boundary: dispatcher, policy, consent, guard inputs
-  sandbox/                  Isolated guard execution (bubblewrap or Docker) and its worker
-  repair/                   Repair loop, validation panels, version store, patch export
-  evaluation/               Agent sessions, tester campaigns, replay, comparison, reproduction
-  dashboard/                Local workspace server and its web assets
-  environments/tau_retail/  Vendored τ-bench retail environment, reference tasks, utility manifest
-tests/                      Test suite (pytest)
-examples/guards/            Saved model-generated guard
-scripts/                    Vendoring and browser-check scripts
-docker/                     Sandbox worker image
-rl/                         RL environment and training workstream
-services/api/               Hosted API and API-key access workstream
-website/                    Public documentation website workstream
-docs/
-  prd/                      engine.md, platform.md, rl-environment.md
-  status/                   Implementation status and acceptance gates
-  research/                 Research weaknesses and the protocol manuscript (paper/)
-  evidence/                 Credential-free live evidence
+spec/                 Rule semantics, JSON schemas, conformance vectors (shared by all SDKs)
+src/patchloop/
+  sdk/rules.py        Rule set validation and evaluation
+  sdk/runtime.py      PatchLoop: tool wrapping, modes, hooks, recordings
+  sdk/report.py       `patchloop report`
+  sdk/doctor.py       `patchloop doctor`
+  loop/               `patchloop test`, `propose` and `replay`: the find, fix and prove loop
+  integrations/       FastMCP, LangChain/LangGraph and Strands adapters
+  sandbox/            Isolated execution of generated functions
+  providers.py        Nebius Token Factory and Tavily clients
+  cli.py              The `patchloop` command
+tests/                Test suite (pytest)
+docker/               Sandbox worker image
+apps/                 Documentation and landing websites
+rl/                   RL environment workstream
+services/api/         Hosted control plane and API keys workstream
+website/              Documentation website workstream
+docs/                 Product requirements and research
 ```
 
-Each workstream directory has a README that names its owner, scope and the PRD it follows.
+## License
 
-## Research status
-
-The manuscript describes a proposed study, including an optional later RL branch. Its v0.3 status is a historical snapshot: a narrow frozen-model repair now works, but no training, transfer result or RL improvement exists. The PRD supersedes its earlier toy-fixture plan. A handwritten guard solves this subset too; added value requires a controlled comparison. Local replay is engineering evidence, not a completed empirical paper.
-
-```bash
-python docs/research/paper/statistics_calculations.py
-cd docs/research/paper
-tectonic --keep-logs --outdir build PATCHLOOP_RL_Research_Paper.tex
-```
-
-LaTeX compilation and planning arithmetic are separate from application experiments. Training remains conditional on a validated evaluator, suitable data, measured reward signal, and an affordable hardware pilot.
+[MIT](LICENSE).
