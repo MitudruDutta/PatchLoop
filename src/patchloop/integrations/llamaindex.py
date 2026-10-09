@@ -3,14 +3,14 @@
     from patchloop.integrations.llamaindex import protect_tools
     agent = FunctionAgent(tools=protect_tools([get_ticket_tool, search_tool]), llm=llm)
 
-A blocked call returns an error ToolOutput with the uniform refusal text. The wrapped tool keeps
+A blocked call returns an error ToolOutput with PatchLoop's message. The wrapped tool keeps
 the original name, description and schema, so the model sees the same tool.
 """
 
 from llama_index.core.tools import ToolOutput
 from llama_index.core.tools.types import AsyncBaseTool
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
 class ProtectedTool(AsyncBaseTool):
@@ -28,17 +28,17 @@ class ProtectedTool(AsyncBaseTool):
             return dict(args[0]) if isinstance(args[0], dict) else {"input": args[0]}
         return {}
 
-    def _refusal(self, arguments):
-        return ToolOutput(content=REFUSAL, tool_name=self.metadata.name, raw_input=arguments,
-                          raw_output=REFUSAL, is_error=True)
+    def _refusal(self, arguments, blocked):
+        return ToolOutput(content=str(blocked), tool_name=self.metadata.name, raw_input=arguments,
+                          raw_output=str(blocked), is_error=True)
 
     def call(self, *args, **kwargs):
         arguments = self._arguments(args, kwargs)
         try:
             return (self.patchloop or client()).run(self.metadata.name, arguments,
                                                     lambda: self._tool.call(*args, **kwargs))
-        except Blocked:
-            return self._refusal(arguments)
+        except Blocked as blocked:
+            return self._refusal(arguments, blocked)
 
     async def acall(self, *args, **kwargs):
         arguments = self._arguments(args, kwargs)
@@ -48,8 +48,8 @@ class ProtectedTool(AsyncBaseTool):
             return await inner(*args, **kwargs) if inner else self._tool.call(*args, **kwargs)
         try:
             return await (self.patchloop or client()).arun(self.metadata.name, arguments, run)
-        except Blocked:
-            return self._refusal(arguments)
+        except Blocked as blocked:
+            return self._refusal(arguments, blocked)
 
 
 def protect_tools(tools, patchloop=None):

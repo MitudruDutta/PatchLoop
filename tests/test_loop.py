@@ -395,3 +395,17 @@ def test_adapter_targets_supply_tools_for_test_propose_and_doctor(tmp_path, monk
     assert "2 tools checked" in out
     assert "export_all: not in the rule set" in out
     assert "get_ticket: binding argument 'ticket_id' is not a parameter" in out
+
+
+
+def test_propose_accepts_limits_in_version_2_and_checks_their_arguments():
+    limited = json.loads(json.dumps(RULES))
+    limited["schema_version"] = 2
+    limited["tools"]["close_ticket"]["limits"] = [{"argument": "refund", "max": "50"}]
+    problems = propose.check_proposal(limited, tools_catalog())
+    assert problems == ["tool 'close_ticket': argument 'refund' is not one of its parameters ['note', 'ticket_id']"]
+    limited["tools"]["close_ticket"]["limits"] = [{"argument": "note", "max": "50"}]
+    assert propose.check_proposal(limited, tools_catalog()) == []
+    limited["schema_version"] = 1
+    assert propose.check_proposal(limited, tools_catalog())[0].startswith("invalid rule set: tool 'close_ticket': limits need")
+    assert "limits" in propose.FORMAT and "schema_version 2" in propose.GUIDE

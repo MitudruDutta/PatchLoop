@@ -186,11 +186,55 @@
           ]
         }
       }
+    },
+    "wallet": {
+      "schema_version": 2,
+      "name": "wallet",
+      "version": "conformance-1",
+      "resources": {
+        "recipient": {
+          "owner_field": "user_id"
+        }
+      },
+      "tools": {
+        "pay": {
+          "access": "scoped",
+          "effect": "external",
+          "consent": true,
+          "resources": [
+            {
+              "argument": "to",
+              "resource": "recipient"
+            }
+          ],
+          "limits": [
+            {
+              "argument": "amount",
+              "max": "0.01"
+            }
+          ]
+        },
+        "tip": {
+          "access": "authenticated",
+          "effect": "external",
+          "limits": [
+            {
+              "argument": "/payment/amount",
+              "max": "5"
+            },
+            {
+              "argument": "fee",
+              "max": "0.5"
+            }
+          ]
+        }
+      }
     }
   },
   "ruleset_sha256": {
     "helpdesk": "2bfefb58914adcb94ddb345e3341fb15ab875ff305cb747794418838546ee692",
-    "deep": "bf670184944db5c4455c8be0ba1488ba6976bd25e14baeaad2300ff66764a110"
+    "deep": "bf670184944db5c4455c8be0ba1488ba6976bd25e14baeaad2300ff66764a110",
+    "wallet": "62feb188a77c976de8208a21487eabebba4f69d12751d2b13209adab08d1d8b6"
   },
   "facts": {
     "helpdesk": {
@@ -286,6 +330,19 @@
         "d4": {
           "x": {
             "owner": "c1"
+          }
+        }
+      },
+      "unavailable": []
+    },
+    "wallet": {
+      "records": {
+        "recipient": {
+          "0xA": {
+            "user_id": "alice"
+          },
+          "0xB": {
+            "user_id": "bob"
           }
         }
       },
@@ -1218,6 +1275,287 @@
         "reason": "authorized"
       },
       "note": "On an object, every token is a key, including \"0\"."
+    },
+    {
+      "id": "limit-within",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": "0.01"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "Equal to max is allowed."
+    },
+    {
+      "id": "limit-over",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": "0.0100001"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "over_limit"
+      }
+    },
+    {
+      "id": "limit-number-argument",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": 0.005
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "A JSON number is compared by its shortest decimal form."
+    },
+    {
+      "id": "limit-number-over",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": 1
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "over_limit"
+      }
+    },
+    {
+      "id": "limit-missing",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "missing_argument"
+      }
+    },
+    {
+      "id": "limit-not-decimal",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": "1e-3"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      },
+      "note": "Exponents are not allowed in decimal strings."
+    },
+    {
+      "id": "limit-boolean",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": true
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "malformed_argument"
+      }
+    },
+    {
+      "id": "limit-after-ownership",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xB",
+        "amount": "100"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "not_owner"
+      },
+      "note": "Ownership is checked before limits."
+    },
+    {
+      "id": "limit-before-consent",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": "100"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "over_limit"
+      },
+      "note": "Limits are checked before consent, so an over-limit call never asks for confirmation."
+    },
+    {
+      "id": "consent-after-limits",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": "0.001"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": false,
+      "expect": {
+        "decision": "deny",
+        "reason": "consent_required"
+      }
+    },
+    {
+      "id": "limit-pointer-and-order",
+      "ruleset": "wallet",
+      "tool": "tip",
+      "arguments": {
+        "payment": {
+          "amount": "4.99"
+        },
+        "fee": "0.6"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "over_limit"
+      }
+    },
+    {
+      "id": "limit-pointer-over",
+      "ruleset": "wallet",
+      "tool": "tip",
+      "arguments": {
+        "payment": {
+          "amount": "5.01"
+        },
+        "fee": "0.1"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "over_limit"
+      }
+    },
+    {
+      "id": "limit-authenticated-ok",
+      "ruleset": "wallet",
+      "tool": "tip",
+      "arguments": {
+        "payment": {
+          "amount": "-2"
+        },
+        "fee": "0"
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "Only a maximum is checked; the tool validates its own minimum."
+    },
+    {
+      "id": "limit-needs-login",
+      "ruleset": "wallet",
+      "tool": "tip",
+      "arguments": {
+        "payment": {
+          "amount": "1"
+        },
+        "fee": "0"
+      },
+      "principal": null,
+      "consent": true,
+      "expect": {
+        "decision": "deny",
+        "reason": "authentication_required"
+      }
+    },
+    {
+      "id": "limit-number-equal-to-max",
+      "ruleset": "wallet",
+      "tool": "pay",
+      "arguments": {
+        "to": "0xA",
+        "amount": 0.01
+      },
+      "principal": {
+        "subject": "alice",
+        "tenant": null
+      },
+      "consent": true,
+      "expect": {
+        "decision": "allow",
+        "reason": "authorized"
+      },
+      "note": "The number 0.01 equals the decimal 0.01; as a binary float it would be slightly larger."
     }
   ],
   "invalid_rulesets": [
@@ -1338,7 +1676,7 @@
     {
       "id": "wrong-schema-version",
       "ruleset": {
-        "schema_version": 2,
+        "schema_version": 3,
         "name": "helpdesk",
         "version": "conformance-1",
         "resources": {
@@ -1446,7 +1784,7 @@
           }
         }
       },
-      "why": "schema_version must be 1"
+      "why": "schema_version must be 1 or 2"
     },
     {
       "id": "empty-version",
@@ -3338,6 +3676,307 @@
               {
                 "argument": "/ids/0",
                 "resource": "ticket"
+              }
+            ]
+          }
+        }
+      },
+      "why": "~ must be followed by 0 or 1"
+    },
+    {
+      "id": "limits-in-version-1",
+      "ruleset": {
+        "schema_version": 1,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "/payment/amount",
+                "max": "5"
+              },
+              {
+                "argument": "fee",
+                "max": "0.5"
+              }
+            ]
+          }
+        }
+      },
+      "why": "limits need schema_version 2"
+    },
+    {
+      "id": "limits-on-public",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "public",
+            "effect": "none",
+            "limits": [
+              {
+                "argument": "a",
+                "max": "1"
+              }
+            ]
+          }
+        }
+      },
+      "why": "A public tool is allowed before limits are checked"
+    },
+    {
+      "id": "limits-empty",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": []
+          }
+        }
+      },
+      "why": "limits must be non-empty"
+    },
+    {
+      "id": "limit-max-number",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "a",
+                "max": 1
+              }
+            ]
+          }
+        }
+      },
+      "why": "max must be a decimal written as a string"
+    },
+    {
+      "id": "limit-max-exponent",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "a",
+                "max": "1e3"
+              }
+            ]
+          }
+        }
+      },
+      "why": "max must match the decimal pattern"
+    },
+    {
+      "id": "limit-unknown-key",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "a",
+                "max": "1",
+                "min": "0"
+              }
+            ]
+          }
+        }
+      },
+      "why": "Only argument and max are allowed"
+    },
+    {
+      "id": "limit-bad-pointer",
+      "ruleset": {
+        "schema_version": 2,
+        "name": "wallet",
+        "version": "conformance-1",
+        "resources": {
+          "recipient": {
+            "owner_field": "user_id"
+          }
+        },
+        "tools": {
+          "pay": {
+            "access": "scoped",
+            "effect": "external",
+            "consent": true,
+            "resources": [
+              {
+                "argument": "to",
+                "resource": "recipient"
+              }
+            ],
+            "limits": [
+              {
+                "argument": "amount",
+                "max": "0.01"
+              }
+            ]
+          },
+          "tip": {
+            "access": "authenticated",
+            "effect": "external",
+            "limits": [
+              {
+                "argument": "/a/~9",
+                "max": "1"
               }
             ]
           }

@@ -379,3 +379,52 @@ def test_observers_see_every_call_without_a_file_and_cannot_break_it():
     unsubscribe()
     search("y")
     assert [(line["tool"], line["outcome"]) for line in seen] == [("search", "ok")]
+
+
+WALLET = {
+    "schema_version": 2, "name": "wallet", "version": "1",
+    "resources": {"recipient": {"owner_field": "user_id"}},
+    "tools": {"pay": {"access": "scoped", "effect": "external", "consent": True,
+                      "resources": [{"argument": "to", "resource": "recipient"}],
+                      "limits": [{"argument": "amount", "max": "0.01"}]}},
+}
+BOOK = {"0xA": {"user_id": "alice"}, "0xB": {"user_id": "bob"}}
+
+
+def test_consent_message_hook_and_later_confirmation(tmp_path):
+    asked, paid = [], []
+    guard = PatchLoop(Ruleset(WALLET), facts=lambda resource, address: BOOK.get(address), mode="enforce",
+                      recordings=tmp_path / "calls.jsonl",
+                      on_consent_required=lambda tool, arguments, principal: asked.append((tool, arguments, principal)))
+    pay = guard.tool(lambda to, amount, memo="": paid.append((to, amount)) or "paid", name="pay")
+    with identify("alice"):
+        with pytest.raises(Blocked) as held:
+            pay("0xA", "0.005", memo="rent")
+        assert str(held.value) == patchloop.CONSENT_NEEDED
+        with pytest.raises(Blocked) as refused:
+            pay("0xB", "0.005")
+        assert str(refused.value) == REFUSAL and refused.value.decision.reason == "not_owner"
+        with pytest.raises(Blocked) as over:
+            pay("0xA", "5")
+        assert (str(over.value), over.value.decision.reason) == (REFUSAL, "over_limit")
+    assert asked == [("pay", {"to": "0xA", "amount": "0.005", "memo": "rent"}, {"subject": "alice", "tenant": None})]
+    tool, arguments, principal = asked[0]
+    guard.confirm(tool, arguments, principal=principal)  # later, outside the request, as a web app would
+    with identify("alice"):
+        assert pay("0xA", "0.005", memo="rent") == "paid"
+    assert paid == [("0xA", "0.005")]
+    recorded = [json.loads(line)["arguments"] for line in (tmp_path / "calls.jsonl").read_text().splitlines()]
+    assert recorded[0] == {"to": "0xA", "amount": "0.005", "memo": "[redacted]"}, "limited arguments are kept"
+
+
+def test_failing_consent_hook_does_not_change_the_decision():
+    def broken(*args):
+        raise RuntimeError("chat is down")
+    guard = PatchLoop(Ruleset(WALLET), facts=lambda resource, address: BOOK.get(address), mode="enforce",
+                      on_consent_required=broken)
+    pay = guard.tool(lambda to, amount: "paid", name="pay")
+    with identify("alice"), pytest.raises(Blocked) as held:
+        pay("0xA", "0.001")
+    assert held.value.decision.reason == "consent_required"
+    with pytest.raises(ValueError):
+        guard.confirm("pay", {"to": "0xA", "amount": "0.001"})

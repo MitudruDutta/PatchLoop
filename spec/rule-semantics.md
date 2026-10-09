@@ -1,6 +1,6 @@
-# PatchLoop rule semantics, version 1
+# PatchLoop rule semantics, versions 1 and 2
 
-This document defines how an SDK decides whether one tool call may run. Every SDK (Python, TypeScript) must give exactly the decisions in `conformance/decisions.json`. Change this document first, then the vectors, then each SDK.
+This document defines how an SDK decides whether one tool call may run. Version 2 adds amount limits (`limits` on tools) and the reason code `over_limit`; everything else is the same as version 1, and an SDK accepts both. Every SDK (Python, TypeScript) must give exactly the decisions in `conformance/decisions.json`. Change this document first, then the vectors, then each SDK.
 
 ## 1. Inputs
 
@@ -12,6 +12,8 @@ This document defines how an SDK decides whether one tool call may run. Every SD
 | Principal | `null` (nobody is logged in), or `{"subject": <identifier>, "tenant": <identifier or null>}` from the host application's authentication |
 | Facts | A lookup `(resource, id) -> record`, supplied by the host application. A record is a JSON object. "Missing" means the lookup confirmed that no record exists. "Unavailable" means the lookup could not answer, or returned something other than a JSON object. |
 | Consent | `true` only when the host application holds trusted user consent for this exact call |
+
+A **decimal** is a JSON string that matches `-?[0-9]+(\.[0-9]+)?`, or a JSON number that is not infinite or NaN. A number is compared by its shortest round-trip decimal form (the value `0.1` is the decimal 0.1). Decimals are compared exactly, never as floating point.
 
 An **identifier** is a string or an integer. Booleans are not integers. An integer identifier must be between −(2^53 − 1) and 2^53 − 1, so that every SDK can represent it exactly.
 
@@ -27,7 +29,12 @@ A decision has three fields:
 
 In enforce mode, an SDK runs the tool only when the decision is `allow`. `deny` and `indeterminate` both block.
 
-**What the model sees.** When a call is blocked, an SDK gives the model exactly this text, whatever the reason: `This action is not permitted.` The reason and lookups go only to the host application and the recordings. A different text per reason would let the model learn which records exist (`not_owner` versus `resource_missing`).
+**What the model sees.** When a call is blocked, an SDK gives the model one of two texts:
+
+- `This action needs the user's confirmation.` for `consent_required`. Consent is checked only after every other check has passed, so this text tells the model nothing about other users' records. It lets the agent ask the user to confirm.
+- `This action is not permitted.` for every other reason.
+
+The reason and lookups go only to the host application and the recordings. A different text per denial reason would let the model learn which records exist (`not_owner` versus `resource_missing`).
 
 ## 3. Evaluation order
 
@@ -41,8 +48,12 @@ The first step that returns ends the evaluation.
    2. If `cardinality` is `many`, the value must be an array, otherwise return **deny** `malformed_argument`. An empty array passes. If `cardinality` is `one`, treat the value as an array of one item.
    3. Every item must be an identifier, otherwise return **deny** `malformed_argument`.
    4. Check each item with section 3.1. The first failure returns.
-5. If the tool has `consent: true` and consent is not `true`, return **deny** `consent_required`.
-6. Return **allow** `authorized`.
+5. If the tool has `limits` (version 2), check each limit in the order listed:
+   1. Read the argument named by `argument`, as in step 4.1. If it is absent or `null`, return **deny** `missing_argument`.
+   2. If the value is not a decimal, return **deny** `malformed_argument`.
+   3. If the value is greater than `max`, return **deny** `over_limit`.
+6. If the tool has `consent: true` and consent is not `true`, return **deny** `consent_required`.
+7. Return **allow** `authorized`.
 
 ### 3.1 Checking one resource identifier
 
@@ -72,7 +83,7 @@ Let `R` be the resource definition named by the binding, and `id` the item.
 An SDK must refuse to load a rule set that breaks any of these rules:
 
 1. The JSON text has no duplicate keys in any object. (A reviewer reads the first value; most parsers keep the last.)
-2. `schema_version` is `1`. `name` and `version` are non-empty strings.
+2. `schema_version` is `1` or `2`. `name` and `version` are non-empty strings.
 3. Only the keys in the schema appear, at every level.
 4. Each resource has exactly one of these forms:
    - `principal: true`;
@@ -84,6 +95,7 @@ An SDK must refuse to load a rule set that breaks any of these rules:
 8. A `scoped` tool has at least one resource binding. Other tools have none.
 9. `consent` is a boolean. It defaults to `false`. A `public` tool must not have `consent: true`, because a public tool is allowed before consent is checked.
 10. A binding's `cardinality` is `one` or `many`. It defaults to `one`. A binding's `argument` that starts with `/` must be a valid JSON Pointer.
+11. `limits` appears only when `schema_version` is `2`, and only on `authenticated` or `scoped` tools (a `public` tool is allowed before limits are checked). It is a non-empty array. Each limit has exactly `argument` (as for bindings) and `max`, a decimal written as a JSON string.
 
 ## 5. Reason codes
 
@@ -93,8 +105,8 @@ An SDK must refuse to load a rule set that breaks any of these rules:
 | `authorized` | allow | All checks passed |
 | `unreviewed_tool` | indeterminate | The tool is not in the rule set |
 | `authentication_required` | deny | Nobody is logged in |
-| `missing_argument` | deny | A bound argument is absent or null |
-| `malformed_argument` | deny | A bound argument has the wrong shape |
+| `missing_argument` | deny | A bound or limited argument is absent or null |
+| `malformed_argument` | deny | A bound or limited argument has the wrong shape |
 | `not_principal` | deny | A principal-type argument names someone else |
 | `resource_missing` | deny | The resource does not exist |
 | `facts_unavailable` | indeterminate | A lookup could not answer |
@@ -103,12 +115,14 @@ An SDK must refuse to load a rule set that breaks any of these rules:
 | `wrong_tenant` | deny | The record belongs to another tenant |
 | `owner_unknown` | indeterminate | The record has no owner value |
 | `not_owner` | deny | The record belongs to another subject |
+| `over_limit` | deny | A limited argument is greater than its maximum (version 2) |
 | `consent_required` | deny | The tool needs consent, and consent is absent |
 
-## 6. Limits of version 1
+## 6. What versions 1 and 2 do not cover
 
 - Identifiers must be unique within one resource type. Tenant-local identifiers come in a later version.
-- No roles, amount limits, time windows or data-flow rules.
+- No roles, time windows or data-flow rules.
+- Amount limits are fixed per tool and argument. There are no per-user limits and no totals over time.
 - `effect` is recorded and reported. It does not change the decision in version 1.
 
 ## 7. Rule set hash

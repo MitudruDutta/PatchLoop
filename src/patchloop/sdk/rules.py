@@ -9,8 +9,10 @@ import hashlib
 import inspect
 import json
 import logging
+import math
 import re
 from dataclasses import dataclass, field
+from decimal import Decimal
 from pathlib import Path
 
 log = logging.getLogger("patchloop")
@@ -20,7 +22,10 @@ MAX_PARENT_LINKS = 4
 
 _TOP_KEYS = {"schema_version", "name", "version", "description", "resources", "tools"}
 _RESOURCE_KEYS = {"principal", "owner_field", "tenant_field", "parent"}
-_TOOL_KEYS = {"access", "effect", "consent", "description", "resources"}
+_TOOL_KEYS = {"access", "effect", "consent", "description", "resources", "limits"}
+_LIMIT_KEYS = {"argument", "max"}
+_DECIMAL = re.compile(r"-?[0-9]+(\.[0-9]+)?")
+SCHEMA_VERSIONS = (1, 2)
 _BINDING_KEYS = {"argument", "resource", "cardinality"}
 _POINTER = re.compile(r"(/([^~/]|~[01])*)+")
 _INDEX = re.compile(r"0|[1-9][0-9]*")
@@ -53,6 +58,19 @@ def is_identifier(value) -> bool:
 def _same(a, b) -> bool:
     # Python never equates a str with an int, and is_identifier excludes bool and float.
     return is_identifier(a) and is_identifier(b) and a == b
+
+
+def decimal_of(value) -> Decimal | None:
+    """A decimal per section 1, or None. Numbers use their shortest round-trip form, never binary floating point."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return Decimal(value)
+    if isinstance(value, float):
+        return Decimal(repr(value)) if math.isfinite(value) else None
+    if isinstance(value, str) and _DECIMAL.fullmatch(value):
+        return Decimal(value)
+    return None
 
 
 def principal_of(value) -> dict | None:
@@ -96,6 +114,11 @@ def _object(value, allowed, where):
     _require(not extra, f"{where}: unknown keys {extra}")
 
 
+def _argument(argument, where):
+    _text(argument, f"{where} argument")
+    _require(not argument.startswith("/") or _POINTER.fullmatch(argument), f"{where}: invalid JSON Pointer {argument!r}")
+
+
 def _defined(name, resources):
     return isinstance(name, str) and name in resources
 
@@ -107,7 +130,8 @@ def _text(value, where):
 def validate(data) -> None:
     """Raise RulesetError unless `data` follows section 4 (rules 2-10)."""
     _object(data, _TOP_KEYS, "rule set")
-    _require(type(data.get("schema_version")) is int and data["schema_version"] == 1, "schema_version must be 1")
+    _require(type(data.get("schema_version")) is int and data["schema_version"] in SCHEMA_VERSIONS,
+             "schema_version must be 1 or 2")
     _text(data.get("name"), "name")
     _text(data.get("version"), "version")
     _require(isinstance(data.get("description", ""), str), "description must be a string")
@@ -154,11 +178,18 @@ def validate(data) -> None:
             _require(not bindings, f"{where}: only scoped tools have resource bindings")
         for binding in bindings:
             _object(binding, _BINDING_KEYS, f"{where} binding")
-            argument = binding.get("argument")
-            _text(argument, f"{where} binding argument")
-            _require(not argument.startswith("/") or _POINTER.fullmatch(argument), f"{where}: invalid JSON Pointer {argument!r}")
+            _argument(binding.get("argument"), f"{where} binding")
             _require(_defined(binding.get("resource"), resources), f"{where}: binding must name a defined resource")
             _require(binding.get("cardinality", "one") in ("one", "many"), f"{where}: cardinality must be one or many")
+        if "limits" in tool:
+            _require(data["schema_version"] == 2, f"{where}: limits need schema_version 2")
+            _require(tool["access"] != "public", f"{where}: a public tool cannot have limits")
+            _require(isinstance(tool["limits"], list) and tool["limits"], f"{where}: limits must be a non-empty array")
+            for limit in tool["limits"]:
+                _object(limit, _LIMIT_KEYS, f"{where} limit")
+                _argument(limit.get("argument"), f"{where} limit")
+                _require(isinstance(limit.get("max"), str) and _DECIMAL.fullmatch(limit["max"]),
+                         f"{where}: limit max must be a decimal written as a string")
 
 
 def _no_duplicates(pairs):
@@ -265,6 +296,15 @@ class Ruleset:
                 failure = yield from self._check(binding["resource"], item, principal, ("deny", "resource_missing"), lookups)
                 if failure:
                     return result(*failure)
+        for limit in rule.get("limits", []):
+            value = argument_value(arguments, limit["argument"])
+            if value is None:
+                return result("deny", "missing_argument")
+            amount = decimal_of(value)
+            if amount is None:
+                return result("deny", "malformed_argument")
+            if amount > Decimal(limit["max"]):
+                return result("deny", "over_limit")
         if rule.get("consent") and consent is not True:
             return result("deny", "consent_required")
         return result("allow", "authorized")

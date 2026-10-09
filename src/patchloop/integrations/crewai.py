@@ -5,7 +5,7 @@
 
 CrewAI swallows exceptions raised by tool hooks and then runs the tool (it fails open), so the
 hook here catches every error itself and blocks the call instead. A blocked call returns the
-uniform refusal text to the agent. Call the returned function to remove the hooks.
+PatchLoop's message to the agent. Call the returned function to remove the hooks.
 """
 
 import logging
@@ -16,7 +16,9 @@ from crewai.hooks.tool_hooks import (register_after_tool_call_hook, register_bef
 from patchloop.sdk.runtime import REFUSAL, Blocked, client
 
 log = logging.getLogger("patchloop")
-_BLOCKED = object()
+class _Refused:
+    def __init__(self, message):
+        self.message = message
 
 
 class PatchLoopHooks:
@@ -30,17 +32,17 @@ class PatchLoopHooks:
             self._calls[id(context.tool_input)] = (self.patchloop or client()).begin(
                 context.tool_name, dict(context.tool_input))
             return None
-        except Blocked:
-            self._calls[id(context.tool_input)] = _BLOCKED
+        except Blocked as blocked:
+            self._calls[id(context.tool_input)] = _Refused(str(blocked))
         except Exception:
             log.exception("PatchLoop check failed for %s; blocking the call", context.tool_name)
-            self._calls[id(context.tool_input)] = _BLOCKED
+            self._calls[id(context.tool_input)] = _Refused(REFUSAL)
         return False
 
     def after(self, context):
         admitted = self._calls.pop(id(context.tool_input), None)
-        if admitted is _BLOCKED:
-            return REFUSAL
+        if isinstance(admitted, _Refused):
+            return admitted.message
         if admitted is not None:
             (self.patchloop or client()).end(admitted)
         return None

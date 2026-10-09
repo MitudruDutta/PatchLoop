@@ -8,34 +8,34 @@
     from patchloop.integrations.langchain import wrap_tool_call, awrap_tool_call
     node = ToolNode(tools, wrap_tool_call=wrap_tool_call, awrap_tool_call=awrap_tool_call)
 
-A blocked call returns an error ToolMessage with the uniform refusal text, so the agent keeps
+A blocked call returns an error ToolMessage with PatchLoop's message, so the agent keeps
 running instead of crashing. Put the middleware last, so it checks the final arguments.
 """
 
 from langchain_core.messages import ToolMessage
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
-def _refusal(request):
+def _refusal(request, blocked):
     call = request.tool_call
-    return ToolMessage(content=REFUSAL, tool_call_id=call["id"], name=call["name"], status="error")
+    return ToolMessage(content=str(blocked), tool_call_id=call["id"], name=call["name"], status="error")
 
 
 def wrap_tool_call(request, handler, patchloop=None):
     call = request.tool_call
     try:
         return (patchloop or client()).run(call["name"], dict(call["args"]), lambda: handler(request))
-    except Blocked:
-        return _refusal(request)
+    except Blocked as blocked:
+        return _refusal(request, blocked)
 
 
 async def awrap_tool_call(request, handler, patchloop=None):
     call = request.tool_call
     try:
         return await (patchloop or client()).arun(call["name"], dict(call["args"]), lambda: handler(request))
-    except Blocked:
-        return _refusal(request)
+    except Blocked as blocked:
+        return _refusal(request, blocked)
 
 
 try:

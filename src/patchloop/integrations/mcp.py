@@ -4,14 +4,14 @@
     session = protect_session(session)          # an mcp.ClientSession
     tools = await load_mcp_tools(session)       # for example with langchain-mcp-adapters
 
-A blocked call returns an MCP error result with the uniform refusal text and never reaches the
+A blocked call returns an MCP error result with PatchLoop's message and never reaches the
 server. Every other attribute of the session is passed through. For servers you run, prefer the
 server-side FastMCP middleware.
 """
 
 from mcp.types import CallToolResult, TextContent
 
-from patchloop.sdk.runtime import REFUSAL, Blocked, client
+from patchloop.sdk.runtime import Blocked, client
 
 
 class ProtectedSession:
@@ -25,8 +25,8 @@ class ProtectedSession:
         patchloop = self.patchloop or client()
         try:
             admitted = await patchloop.abegin(name, dict(arguments or {}))
-        except Blocked:
-            return CallToolResult(content=[TextContent(type="text", text=REFUSAL)], isError=True)
+        except Blocked as blocked:
+            return CallToolResult(content=[TextContent(type="text", text=str(blocked))], isError=True)
         try:
             result = await self._session.call_tool(name, arguments, *args, **kwargs)
         except BaseException as exc:
