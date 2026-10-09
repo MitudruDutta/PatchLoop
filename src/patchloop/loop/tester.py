@@ -8,6 +8,8 @@ The target module provides:
     agent(message, history)   one turn of your agent; returns its reply text
     reset()                   optional: restores the test data before each scenario
     NOTES                     optional text about the test data, for example which records belong to whom
+    TOOLS                     optional tool catalog (for example OpenAI function definitions); needed when
+                              the tools are protected through an adapter and not wrapped with guard.tool()
 
 The tester plans scenarios, then plays a customer for a few turns per scenario. Every tool call
 the agent makes is decided by the rule set. A call the rules do not allow is a finding: in
@@ -198,7 +200,7 @@ def run_tests(target, *, client, model, scenarios=3, turns=4, max_requests=40, j
     for user in users:
         principal_of(user)
     notes = str(getattr(target, "NOTES", ""))
-    tools = catalogs.from_patchloop(guard)
+    tools = catalogs.tools_of(target)
     budget = Budget(client, model, max_requests)
     report = {"models": budget.models, "rules": {"name": guard.rules.name, "version": guard.rules.version,
                                         "sha256": guard.rules.sha256},

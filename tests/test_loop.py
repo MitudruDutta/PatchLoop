@@ -365,3 +365,22 @@ def test_provider_features_structured_output_role_models_query_and_usage(monkeyp
     monkeypatch.setenv("NEBIUS_MODEL_JUDGE", "meta/llama")
     with pytest.raises(ProviderError):
         providers.nemotron_model("judge")
+
+
+def test_adapter_targets_supply_tools_for_test_propose_and_doctor(tmp_path, monkeypatch, capsys):
+    from patchloop.sdk import doctor
+    (tmp_path / "hooked_target.py").write_text(
+        "from patchloop import PatchLoop, Ruleset\n"
+        f"guard = PatchLoop(Ruleset({RULES!r}), facts=lambda r, i: None, mode='enforce')\n"
+        "TOOLS = [{'type': 'function', 'function': {'name': 'get_ticket', 'description': 'Read a ticket',\n"
+        "          'parameters': {'type': 'object', 'properties': {'id': {'type': 'string'}}}}},\n"
+        "         {'name': 'export_all', 'inputSchema': {'type': 'object', 'properties': {}}}]\n")
+    monkeypatch.chdir(tmp_path)
+    target = catalog.load_target("hooked_target")
+    assert [tool["name"] for tool in catalog.tools_of(target)] == ["get_ticket", "export_all"]
+    monkeypatch.setattr("sys.argv", ["patchloop doctor", "hooked_target"])
+    assert doctor.main() == 1
+    out = capsys.readouterr().out
+    assert "2 tools checked" in out
+    assert "export_all: not in the rule set" in out
+    assert "get_ticket: binding argument 'ticket_id' is not a parameter" in out

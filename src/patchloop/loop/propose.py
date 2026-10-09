@@ -196,8 +196,9 @@ def main():
         return 2
     try:
         model = nemotron_model("proposer")
-        guard = catalogs.guard_of(catalogs.load_target(options.target)) if options.target else None
-        tools = catalogs.from_file(options.tools) if options.tools else catalogs.from_patchloop(guard)
+        target = catalogs.load_target(options.target) if options.target else None
+        guard = catalogs.guard_of(target) if target is not None else None
+        tools = catalogs.from_file(options.tools) if options.tools else catalogs.tools_of(target)
         recordings = Path(options.recordings).read_text(encoding="utf-8").splitlines() if options.recordings else None
         report = propose(tools, client=NebiusClient(), model=model,
                          search=None if options.no_guidance else TavilyClient(),

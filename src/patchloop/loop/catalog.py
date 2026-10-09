@@ -42,16 +42,30 @@ def from_patchloop(guard) -> list[dict]:
     return tools
 
 
-def from_file(path) -> list[dict]:
-    """Read tools as plain {name, description, parameters}, OpenAI function tools, or MCP tools/list."""
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    rows = data.get("tools", []) if isinstance(data, dict) else data
+def normalize(rows) -> list[dict]:
+    """Accept plain {name, description, parameters}, OpenAI function tools, or MCP tools/list entries."""
+    rows = rows.get("tools", []) if isinstance(rows, dict) else rows
     tools = []
     for row in rows:
         row = row.get("function", row) if row.get("type") == "function" else row
         tools.append({"name": row["name"], "description": row.get("description", ""),
                       "parameters": row.get("parameters") or row.get("inputSchema") or {"type": "object", "properties": {}}})
     return tools
+
+
+def from_file(path) -> list[dict]:
+    """Read a tool catalog file in any format that normalize() accepts."""
+    return normalize(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def tools_of(target) -> list[dict]:
+    """A target's tool catalog: its TOOLS attribute when present, else the tools wrapped by its guard.
+
+    Apps protected through an adapter (hooks, middleware) register no tools with the guard, so they
+    provide TOOLS, for example as OpenAI function definitions.
+    """
+    rows = getattr(target, "TOOLS", None)
+    return normalize(rows) if rows else from_patchloop(guard_of(target))
 
 
 def load_target(spec: str):

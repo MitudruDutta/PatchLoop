@@ -143,6 +143,7 @@ Each role can use its own Nemotron model: `NEBIUS_MODEL_PROPOSER`, `NEBIUS_MODEL
 guard = PatchLoop("rules.json", facts=lookup, mode="observe")   # or patchloop.init(...)
 USERS = [{"subject": "ada", "tenant": "acme"}, {"subject": "bo", "tenant": "acme"}]
 NOTES = "Ticket T1 belongs to ada, T2 to bo."                     # optional, helps the tester and judge
+TOOLS = [...]   # optional tool catalog (OpenAI function format); needed when an adapter protects the tools
 
 def agent(message: str, history: list[dict]) -> str: ...        # one turn of your agent
 def reset(): ...                                                  # optional: restore test data
